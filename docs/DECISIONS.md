@@ -274,8 +274,67 @@ wins; fallback stays documented in case Vercel constraints ever change.
   3. Skip ffmpeg-dependent tests in CI — ✗ rejected: deletes the exact
      coverage that caught this failure class.
 - **Fix:** job-level `env.FFMPEG_PATH` in both CI jobs, apt ffmpeg in the
-  e2e job, diagnostic step pushed as `f80a936`. **Retest:** CI re-run —
-  see final report for the run URL.
+  e2e job, diagnostic step pushed as `f80a936`.
+- **Retest:** five consecutive green CI runs on `main` (39042871812,
+  39042984582, 39043668899, 39044122482, 39044903089) — backend + e2e
+  jobs both pass; the weekly yt-dlp workflow was aligned in `8bf473c`.
+  Node 20 deprecation annotations remain until the pending Dependabot
+  action-bump PRs merge; runners migrate to Ubuntu 26 on 2026-10-19.
+
+### F9 — vercel.json `headers`/`redirects` were silently ignored (and the fix's own outage)
+
+- **Symptom A:** probing extensionless legal URLs showed `/about` → 404
+  and — worse — **every static response had been missing all security
+  headers** (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`,
+  `Permissions-Policy`, `X-Powered-By`) since the first deploy. API
+  responses only *looked* protected because FastAPI's own middleware adds
+  those.
+- **Diagnosis A (real evidence):** the project used legacy `builds` +
+  `routes`; live probes showed the top-level `headers`/`redirects` arrays
+  never applied (headers ABSENT on `/` and `/sw.js`; `/about` 404, no
+  `Location`). With legacy `builds`, routing comes exclusively from
+  `routes` — the modern top-level properties are ignored.
+- **Symptom B (the attempted fix's outage):** moving headers/redirects
+  *into* the legacy `routes` table (`bd45372`) **404'd every `/api/*`**
+  (platform `NOT_FOUND`) for ~15 minutes.
+- **Diagnosis B (real evidence):** on that deployment the first
+  headers-only entry `{"src":"/(.*)","headers":{…}}` applied its headers
+  to every response, but entries 2–16 never ran: `/sw.js` lacked its own
+  entry's headers, `/about` had no `Location`, `/api/health` 404 while
+  `/api/index.py` (the build output's default path) answered
+  `{"detail":"Not Found"}` — legacy **headers-only route entries are
+  terminal** (apply → default serve), so a leading one swallows every
+  dest/redirect entry. Static filesystem hits are served by
+  `handle: filesystem`, which cannot carry headers — so legacy routes
+  fundamentally cannot header static responses.
+- **Alternatives:**
+  1. Modern vercel.json — drop `builds`, use `rewrites`
+     (`/api/(.*)` → `/api/index`), explicit
+     `functions.maxDuration: 300`, top-level `headers` + `redirects`.
+     ✅ **chosen** — all properties documented to work without `builds`,
+     and it could be validated on a **preview deployment first** so
+     production was never the test bed.
+  2. Attach headers to each dest entry in legacy routes — ✗ rejected:
+     `handle: filesystem` hits (every static file) can never carry
+     headers — dead end proven by B.
+  3. `<meta http-equiv>` headers in HTML — ✗ rejected: nosniff and
+     Permissions-Policy are unsupported via meta; they must be real
+     response headers.
+- **Preview-testing mechanics:** previews sit behind Vercel SSO
+  (`ssoProtection: {"deploymentType":"all_except_custom_domains"}` —
+  production's custom domain is exempt, which is why the site stayed
+  public). A wrapper temporarily set `ssoProtection: null` through the
+  project REST API, ran the battery, and **restored the exact value in a
+  `finally` block**. (First run had a sentinel bug — `null` *is* the valid
+  "disabled" value yet was treated as failure **and** restoration sat
+  outside the `try`; v2 fixed both and the restored setting was verified
+  as `{"deploymentType":"all_except_custom_domains"}`.)
+- **Fix:** `b8d3ed5` reverted the broken legacy attempt first (restore
+  service), then `0dfa478` landed the modern config.
+- **Retest:** preview **13/13** and production **13/13** (home + all
+  static security headers, 308 extensionless redirects, API via rewrite,
+  IG info, MP3 1.22 MB download, sw.js/manifest headers,
+  platforms=instagram-only, validation error schema).
 
 ---
 
