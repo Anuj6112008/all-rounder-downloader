@@ -83,34 +83,35 @@ class TestSsrfBlocking:
             validate_media_host("https://evil.example.com/x.mp4")
 
     def test_media_host_allows_known_cdn(self):
-        assert validate_media_host("https://rr3---sn.googlevideo.com/videoplayback?x=1")
+        assert validate_media_host("https://scontent.xx.fbcdn.net/videoplayback?x=1")
 
 
 # ---------------------------------------------------------------------------
 # Platform detection
 # ---------------------------------------------------------------------------
 class TestPlatformDetection:
-    def test_youtube(self):
-        assert detect_platform("www.youtube.com").key == "youtube"
-        assert detect_platform("youtu.be").key == "youtube"
-        assert detect_platform("m.youtube.com").key == "youtube"
+    def test_youtube_now_unsupported(self):
+        # IGDesk is Instagram-only; YouTube must NOT be detected as a platform.
+        assert detect_platform("www.youtube.com") is None
+        assert detect_platform("youtu.be") is None
 
     def test_instagram(self):
         assert detect_platform("www.instagram.com").key == "instagram"
         assert detect_platform("instagr.am").key == "instagram"
 
-    def test_subdomain_of_known_cdn(self):
-        # media CDN subdomains map back to their platform
-        assert detect_platform("video.twimg.com").key == "x"
+    def test_subdomain_maps_to_platform(self):
+        # a subdomain of a registered domain maps back to its platform
+        assert detect_platform("staging.instagram.com").key == "instagram"
 
     def test_unknown_returns_none(self):
         assert detect_platform("evil.example.com") is None
 
-    def test_enabled_platforms_pass_validation(self):
-        url, plat = validate_and_detect("https://www.youtube.com/watch?v=abc")
-        assert plat.key == "youtube"
+    def test_enabled_platform_passes_validation(self):
+        url, plat = validate_and_detect("https://www.instagram.com/reel/ABC123/")
+        assert plat.key == "instagram"
 
-    def test_disabled_platform_is_coming_soon(self):
+    def test_other_platforms_rejected(self):
+        # Only Instagram is enabled; other platforms are unsupported.
         with pytest.raises(AppError) as e:
             validate_and_detect("https://www.tiktok.com/@u/video/1")
         assert e.value.code == ErrorCode.UNSUPPORTED_PLATFORM
@@ -122,7 +123,7 @@ class TestPlatformDetection:
 
     def test_media_host_allowlist(self):
         assert is_media_host("instagram.fpnq7-1.fna.fbcdn.net")
-        assert is_media_host("ytimg.com")
+        assert is_media_host("scontent.cdninstagram.com")
         assert not is_media_host("notchecked.example.com")
 
 
@@ -206,7 +207,7 @@ class TestApiContract:
         assert r.status_code == 200
         plats = r.json()["platforms"]
         keys = {p["key"] for p in plats}
-        assert {"youtube", "instagram"} <= keys
+        assert keys == {"instagram"}
         # every entry has a status
         assert all(p["status"] in ("enabled", "coming_soon") for p in plats)
 
@@ -223,11 +224,11 @@ class TestApiContract:
         assert r.json()["error"]["code"] == ErrorCode.INVALID_URL
 
     def test_download_bad_kind(self, client):
-        r = client.get("/api/download?url=https://youtube.com/watch?v=a&format_id=v:1&kind=bogus")
+        r = client.get("/api/download?url=https://www.instagram.com/reel/ABC/&format_id=v:1&kind=bogus")
         assert r.status_code == 400
         assert r.json()["error"]["code"] == ErrorCode.INVALID_URL
 
     def test_thumb_bad_type(self, client):
-        r = client.get("/api/thumb?url=https://youtube.com/watch?v=a&type=bmp")
+        r = client.get("/api/thumb?url=https://www.instagram.com/reel/ABC/&type=bmp")
         assert r.status_code == 400
         assert r.json()["error"]["code"] == ErrorCode.INVALID_URL

@@ -4,7 +4,7 @@
    - Navigation: network-first with cache fallback (works offline after 1st visit).
    - /api/*: NEVER cached (freshness + privacy; no user data stored).
 */
-const CACHE = "igdesk-v1";
+const CACHE = "igdesk-v2";
 const SHELL = [
   "/",
   "/index.html",

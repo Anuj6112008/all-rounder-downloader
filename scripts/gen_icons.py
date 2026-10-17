@@ -12,17 +12,30 @@ os.makedirs(OUT, exist_ok=True)
 
 
 def _gradient(size):
+    """Instagram brand gradient: yellow -> orange -> pink -> purple -> blue."""
     img = Image.new("RGB", (size, size))
-    c1, c2 = (79, 140, 255), (124, 92, 255)
+    stops = [
+        (0.00, (254, 218, 117)),   # #feda75
+        (0.30, (250, 126, 30)),    # #fa7e1e
+        (0.60, (214, 41, 118)),    # #d62976
+        (0.85, (150, 47, 191)),    # #962fbf
+        (1.00, (79, 91, 213)),     # #4f5bd5
+    ]
     for y in range(size):
         for x in range(size):
             t = (x + y) / (2 * size)
-            img.putpixel((x, y), tuple(int(c1[i] + (c2[i] - c1[i]) * t) for i in range(3)))
+            for i in range(len(stops) - 1):
+                t0, c0 = stops[i]
+                t1, c1 = stops[i + 1]
+                if t0 <= t <= t1:
+                    f = 0 if t1 == t0 else (t - t0) / (t1 - t0)
+                    img.putpixel((x, y), tuple(int(c0[k] + (c1[k] - c0[k]) * f) for k in range(3)))
+                    break
     return img
 
 
 def _draw_arrow(size, pad_frac, radius_frac, bg=None):
-    """Return an RGBA icon of a download arrow on a rounded gradient tile."""
+    """Return an RGBA icon of a rounded-square + camera glyph (Instagram mark)."""
     img = _gradient(size).convert("RGBA")
     mask = Image.new("L", (size, size), 0)
     md = ImageDraw.Draw(mask)
@@ -32,19 +45,16 @@ def _draw_arrow(size, pad_frac, radius_frac, bg=None):
 
     d = ImageDraw.Draw(img)
     pad = int(size * pad_frac)
-    cx = size // 2
-    top = pad
-    bottom = size - pad
-    shaft_w = max(4, int(size * 0.11))
-    head_w = int(size * 0.34)
-    head_h = int(size * 0.22)
-    mid_y = bottom - head_h - int(size * 0.10)
-
-    d.line([(cx, top), (cx, mid_y)], fill="white", width=shaft_w)
-    d.polygon([(cx - head_w // 2, mid_y), (cx + head_w // 2, mid_y), (cx, bottom - int(size * 0.10))],
-              fill="white")
-    bar_y = bottom - int(size * 0.02)
-    d.line([(cx - head_w, bar_y), (cx + head_w, bar_y)], fill="white", width=shaft_w)
+    box = [pad, pad, size - pad, size - pad]
+    sw = max(4, int(size * 0.07))
+    d.rounded_rectangle(box, radius=int(size * 0.12), outline="white", width=sw)
+    r_out = (size - 2 * pad) // 3
+    cx = cy = size // 2
+    d.ellipse([cx - r_out, cy - r_out, cx + r_out, cy + r_out], outline="white", width=sw)
+    dr = max(3, int(size * 0.05))
+    dx = pad + int((size - 2 * pad) * 0.78)
+    dy = pad + int((size - 2 * pad) * 0.24)
+    d.ellipse([dx - dr, dy - dr, dx + dr, dy + dr], fill="white")
     return img
 
 

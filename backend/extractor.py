@@ -154,14 +154,12 @@ def map_download_error(exc: Exception) -> AppError:
 # Extraction
 # ---------------------------------------------------------------------------
 
-def _ydl_opts(platform=None) -> Dict[str, Any]:
+def _ydl_opts() -> Dict[str, Any]:
     """Hardened yt-dlp options (no playlists, quiet, timeouts, /tmp cache).
 
-    For YouTube, selects official player clients (via ``extractor_args``) to
-    reduce datacenter-IP automated-traffic checks. No cookies, no proxies, no
-    spoofing — only first-class yt-dlp extractor options.
+    No cookies, no proxies, no spoofing — only first-class yt-dlp options.
     """
-    opts: Dict[str, Any] = {
+    return {
         "quiet": True,
         "no_warnings": True,
         "noplaylist": True,
@@ -175,10 +173,6 @@ def _ydl_opts(platform=None) -> Dict[str, Any]:
         "ignore_no_formats_error": False,
         "color": "never",
     }
-    clients = [c.strip() for c in settings.youtube_player_clients.split(",") if c.strip()]
-    if platform is not None and getattr(platform, "key", None) == "youtube" and clients:
-        opts["extractor_args"] = {"youtube": {"player_client": clients}}
-    return opts
 
 
 def extract_info(url: str, platform) -> MediaInfo:
@@ -189,7 +183,7 @@ def extract_info(url: str, platform) -> MediaInfo:
             exceeds the configured duration limit.
     """
     try:
-        with yt_dlp.YoutubeDL(_ydl_opts(platform)) as ydl:
+        with yt_dlp.YoutubeDL(_ydl_opts()) as ydl:
             raw = ydl.extract_info(url, download=False)
     except Exception as exc:  # noqa: BLE001 - mapped centrally
         raise map_download_error(exc) from exc

@@ -41,5 +41,8 @@ Thumbs.db
 !public/**/*.png
 
 lh-report.json
-.vercel/
-.vercel
+lh-prod.json
+ui-dark.png
+ui-light.png
+ui-desktop.png
+shot.js

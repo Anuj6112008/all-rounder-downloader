@@ -9,10 +9,9 @@
 - 🖼️ **Thumbnail** — best resolution as JPG / PNG / WEBP
 - ℹ️ **Metadata** — title, uploader, duration, platform
 
-**Launch platforms:** Instagram (public Reels/posts) · YouTube (videos & Shorts).
-Other yt-dlp platforms (Facebook, X, TikTok, Pinterest, Reddit, Vimeo,
-SoundCloud, Dailymotion) are listed as *coming soon* until they pass live tests —
-never shown as broken.
+**Platform:** Instagram (public Reels & posts). IGDesk is a dedicated
+Instagram downloader — tuned so every video download carries audio and correct
+duration metadata.
 
 > **Public content only.** Only download what you own or have permission to
 > download. This tool never uses cookies, logins, proxies, captcha-solving or
@@ -41,7 +40,7 @@ The three-tier **media pipeline** (see [`docs/DECISIONS.md`](docs/DECISIONS.md))
 |---|---|---|
 | **A — Direct** | upstream URL carries `Content-Disposition: attachment` | `302` redirect to the CDN — zero server bandwidth |
 | **B — Streaming proxy** | otherwise | chunked stream, **Range** support, size cap, no disk writes |
-| **C — Merge / convert** | 1080p+ (split streams), MP3 | `ffmpeg -c copy` merge → fragmented MP4, or `libmp3lame` → MP3, both streamed from a pipe |
+| **C — Merge / convert** | 1080p+ (split streams), MP3 | `ffmpeg -c copy` merge → faststart MP4 (moov at front so galleries read duration), or `libmp3lame` → MP3 |
 
 `ffmpeg` is bundled inside the Python function via the `imageio-ffmpeg` static
 build (resolved: `FFMPEG_PATH` env → bundled binary → `PATH`), which is how it

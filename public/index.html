@@ -3,20 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>IGDesk Downloader — Download public videos, audio &amp; thumbnails</title>
-  <meta name="description" content="IGDesk Downloader is a fast, mobile-first tool to download public videos in selectable quality (up to 1080p+), audio as MP3 or native M4A/WEBM, and thumbnails from Instagram and YouTube. Public content only." />
+  <title>IGDesk Downloader — Download Instagram videos, reels, audio &amp; thumbnails</title>
+  <meta name="description" content="IGDesk Downloader is a fast, mobile-first tool to download public Instagram videos and reels in selectable quality (up to 1080p+ with audio), audio as MP3 or native M4A/WEBM, and thumbnails. Public content only." />
   <meta name="theme-color" content="#0b0f19" />
   <link rel="canonical" href="https://all-rounder-downloader.vercel.app/" />
 
   <!-- Open Graph / social -->
   <meta property="og:type" content="website" />
   <meta property="og:title" content="IGDesk Downloader" />
-  <meta property="og:description" content="Download public videos (1080p+ with audio), MP3, native audio and thumbnails. Instagram + YouTube supported." />
+  <meta property="og:description" content="Download public Instagram videos & reels (1080p+ with audio), MP3, native audio and thumbnails. Free, no login." />
   <meta property="og:url" content="https://all-rounder-downloader.vercel.app/" />
   <meta property="og:image" content="https://all-rounder-downloader.vercel.app/icons/icon-512.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="IGDesk Downloader" />
-  <meta name="twitter:description" content="Download public videos (1080p+ with audio), MP3, native audio and thumbnails." />
+  <meta name="twitter:description" content="Download public Instagram videos & reels (1080p+ with audio), MP3, native audio and thumbnails." />
 
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icons/favicon.svg" type="image/svg+xml" />
@@ -24,47 +24,87 @@
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
+  <!-- Animated claymorphic background blobs (Instagram gradient) -->
+  <div class="blobs" aria-hidden="true">
+    <span class="blob b1"></span>
+    <span class="blob b2"></span>
+    <span class="blob b3"></span>
+    <span class="blob b4"></span>
+  </div>
+
   <a class="skip-link" href="#main">Skip to content</a>
 
   <header class="topbar">
     <div class="brand">
-      <img src="/icons/favicon.svg" alt="" width="28" height="28" aria-hidden="true" />
-      <span>IGDesk <strong>Downloader</strong></span>
+      <span class="brand-logo" aria-hidden="true">📸</span>
+      <span>IG<strong>Desk</strong></span>
     </div>
     <div class="topbar-actions">
-      <button id="installBtn" class="btn btn-ghost hidden" type="button" data-i18n="install">Install app</button>
+      <button id="installBtn" class="btn btn-ghost hidden" type="button" data-i18n="install">Install</button>
       <button id="langBtn" class="btn btn-ghost" type="button" aria-label="Switch language">EN&nbsp;|&nbsp;हिं</button>
       <button id="themeBtn" class="btn btn-ghost" type="button" aria-label="Toggle theme">🌙</button>
     </div>
   </header>
 
   <main id="main" class="wrap">
-    <section class="hero">
-      <h1 data-i18n="title">Download public videos, audio &amp; thumbnails</h1>
-      <p class="sub" data-i18n="subtitle">Paste a public link from Instagram or YouTube. Public content only — only download what you own or have permission to download.</p>
+    <!-- Hero -->
+    <section class="hero reveal">
+      <span class="hero-badge" data-i18n="badge">✨ 100% Free · No Login</span>
+      <h1 data-i18n="title">Download Instagram <span class="grad">videos &amp; reels</span></h1>
+      <p class="sub" data-i18n="subtitle">Paste any public Instagram link to save video, MP3 audio and thumbnails in HD. Public content only — download what you own or have permission for.</p>
+      <div class="pills" aria-label="Features">
+        <span class="pill">🎬 1080p HD</span>
+        <span class="pill">🎧 MP3 + M4A</span>
+        <span class="pill">🖼️ Thumbnails</span>
+        <span class="pill">🚫 No watermark</span>
+      </div>
     </section>
 
-    <section class="input-card" aria-label="Link input">
+    <!-- Input card -->
+    <section class="input-card reveal" aria-label="Link input">
       <div class="input-row">
         <div class="platform-badge hidden" id="platformBadge" aria-live="polite">
-          <span id="platformIcon" aria-hidden="true">🔗</span>
-          <span id="platformName">Link</span>
+          <span id="platformIcon" aria-hidden="true">📸</span>
+          <span id="platformName">Instagram</span>
         </div>
         <label class="visually-hidden" for="urlInput" data-i18n="urllabel">Paste media link</label>
         <input id="urlInput" type="url" inputmode="url" autocomplete="off" spellcheck="false"
-               placeholder="https://…" data-i18n-placeholder="placeholder" />
-        <button id="pasteBtn" class="btn btn-ghost" type="button" data-i18n="paste">Paste</button>
+               placeholder="https://www.instagram.com/reel/…" data-i18n-placeholder="placeholder" />
+        <button id="pasteBtn" class="btn btn-ghost btn-icon" type="button" data-i18n="paste" aria-label="Paste">📋</button>
       </div>
       <div class="btn-row">
-        <button id="fetchBtn" class="btn btn-primary" type="button" data-i18n="fetch">Fetch</button>
+        <button id="fetchBtn" class="btn btn-primary btn-lg" type="button" data-i18n="fetch">
+          <span data-i18n="fetch">Fetch</span>
+        </button>
         <button id="clearBtn" class="btn btn-ghost" type="button" data-i18n="clear">Clear</button>
       </div>
       <div id="status" class="status" role="status" aria-live="polite"></div>
     </section>
 
-    <section id="result" class="result hidden" aria-live="polite">
+    <!-- How it works -->
+    <section class="how reveal" aria-label="How it works">
+      <div class="step">
+        <span class="step-num">1</span>
+        <p data-i18n="step1">Copy an Instagram link</p>
+      </div>
+      <div class="step-line" aria-hidden="true"></div>
+      <div class="step">
+        <span class="step-num">2</span>
+        <p data-i18n="step2">Paste it above</p>
+      </div>
+      <div class="step-line" aria-hidden="true"></div>
+      <div class="step">
+        <span class="step-num">3</span>
+        <p data-i18n="step3">Tap to download</p>
+      </div>
+    </section>
+
+    <!-- Result -->
+    <section id="result" class="result hidden reveal" aria-live="polite">
       <article class="result-card">
-        <img id="rThumb" class="r-thumb" alt="" width="160" height="90" loading="lazy" />
+        <div class="r-thumb-wrap">
+          <img id="rThumb" class="r-thumb" alt="" width="160" height="90" loading="lazy" />
+        </div>
         <div class="r-meta">
           <h2 id="rTitle" class="r-title">—</h2>
           <p class="r-sub"><span id="rUploader"></span> · <span id="rDuration"></span> · <span id="rPlatform"></span></p>
@@ -76,9 +116,10 @@
       </article>
 
       <div class="tabs" role="tablist" aria-label="Download type">
-        <button class="tab active" id="tab-video" role="tab" aria-selected="true" aria-controls="panel-video" data-tab="video" data-i18n="tab_video">Video</button>
-        <button class="tab" id="tab-audio" role="tab" aria-selected="false" aria-controls="panel-audio" data-tab="audio" data-i18n="tab_audio">Audio</button>
-        <button class="tab" id="tab-thumb" role="tab" aria-selected="false" aria-controls="panel-thumb" data-tab="thumb" data-i18n="tab_thumb">Thumbnail</button>
+        <span class="tab-indicator" aria-hidden="true"></span>
+        <button class="tab active" id="tab-video" role="tab" aria-selected="true" aria-controls="panel-video" data-tab="video" data-i18n="tab_video">🎬 Video</button>
+        <button class="tab" id="tab-audio" role="tab" aria-selected="false" aria-controls="panel-audio" data-tab="audio" data-i18n="tab_audio">🎧 Audio</button>
+        <button class="tab" id="tab-thumb" role="tab" aria-selected="false" aria-controls="panel-thumb" data-tab="thumb" data-i18n="tab_thumb">🖼️ Thumb</button>
       </div>
 
       <div id="panel-video" class="panel" role="tabpanel" aria-labelledby="tab-video">
@@ -89,28 +130,43 @@
       </div>
       <div id="panel-thumb" class="panel hidden" role="tabpanel" aria-labelledby="tab-thumb">
         <div class="thumb-panel">
-          <img id="thumbPreview" alt="Thumbnail preview" loading="lazy" />
+          <div class="thumb-preview-wrap">
+            <img id="thumbPreview" alt="Thumbnail preview" loading="lazy" />
+          </div>
           <div class="fmt-list thumb-buttons">
-            <button class="fmt-row dl-btn" data-kind="thumb" data-ext="jpg"><span>JPG</span><span class="fmt-note">best resolution</span></button>
-            <button class="fmt-row dl-btn" data-kind="thumb" data-ext="png"><span>PNG</span><span class="fmt-note">lossless</span></button>
-            <button class="fmt-row dl-btn" data-kind="thumb" data-ext="webp"><span>WEBP</span><span class="fmt-note">smallest</span></button>
+            <button class="fmt-row dl-btn thumb-btn" data-kind="thumb" data-ext="jpg"><span class="fmt-label">JPG</span><span class="fmt-note" data-i18n="best">best resolution</span></button>
+            <button class="fmt-row dl-btn thumb-btn" data-kind="thumb" data-ext="png"><span class="fmt-label">PNG</span><span class="fmt-note" data-i18n="lossless">lossless</span></button>
+            <button class="fmt-row dl-btn thumb-btn" data-kind="thumb" data-ext="webp"><span class="fmt-label">WEBP</span><span class="fmt-note" data-i18n="smallest">smallest</span></button>
           </div>
         </div>
       </div>
     </section>
 
-    <section id="platforms" class="platforms" aria-label="Supported platforms">
-      <h2 data-i18n="platforms_title">Platforms</h2>
+    <!-- Why IGDesk -->
+    <section class="features reveal" aria-label="Why IGDesk">
+      <h2 data-i18n="features_title">Why IGDesk?</h2>
+      <div class="feat-grid">
+        <div class="feat clay"><span class="feat-ic">⚡</span><h3 data-i18n="feat1_t">Lightning fast</h3><p data-i18n="feat1_d">Direct, optimized downloads — no waiting around.</p></div>
+        <div class="feat clay"><span class="feat-ic">🔓</span><h3 data-i18n="feat2_t">No login ever</h3><p data-i18n="feat2_d">Works on public links only. We never ask for your account.</p></div>
+        <div class="feat clay"><span class="feat-ic">🎧</span><h3 data-i18n="feat3_t">Video + MP3</h3><p data-i18n="feat3_d">Grab HD video with audio, or convert straight to MP3.</p></div>
+        <div class="feat clay"><span class="feat-ic">🔒</span><h3 data-i18n="feat4_t">Private by design</h3><p data-i18n="feat4_d">Nothing you download is stored. Links stay on your device.</p></div>
+      </div>
+    </section>
+
+    <!-- Platforms -->
+    <section id="platforms" class="platforms reveal" aria-label="Supported platforms">
       <ul id="platformList" class="platform-list"></ul>
     </section>
 
-    <section id="historySection" class="history" aria-label="Recent downloads">
+    <!-- History -->
+    <section id="historySection" class="history clay reveal" aria-label="Recent downloads">
       <div class="history-head">
-        <h2 data-i18n="history_title">Recent</h2>
-        <button id="clearHistoryBtn" class="btn btn-ghost btn-sm" type="button" data-i18n="history_clear">Clear</button>
+        <h2 data-i18n="history_title">🕘 Recent</h2>
+        <button id="clearHistoryBtn" class="btn btn-ghost btn-sm hidden" type="button" data-i18n="history_clear">Clear</button>
       </div>
       <label class="switch">
         <input type="checkbox" id="historyToggle" />
+        <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
         <span data-i18n="history_optin">Save recent links on this device (never sent to a server)</span>
       </label>
       <ul id="historyList" class="history-list"></ul>

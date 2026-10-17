@@ -24,7 +24,7 @@ BASE = os.getenv("TEST_BASE_URL", "http://127.0.0.1:8000")
     {"url": ""},
     {"url": "   "},
     {"url": "not a url at all"},
-    {"url": "ftp://youtube.com/watch?v=a"},
+    {"url": "ftp://instagram.com/reel/abc/"},
     {"url": "javascript:alert(1)"},
     {"url": "file:///etc/passwd"},
 ])
@@ -86,7 +86,7 @@ def test_thumb_ssrf_blocked(client):
 # Oversized URL input
 # ---------------------------------------------------------------------------
 def test_oversized_url_rejected(client):
-    r = client.post("/api/info", json={"url": "https://youtube.com/" + "a" * 600})
+    r = client.post("/api/info", json={"url": "https://instagram.com/" + "a" * 600})
     assert r.status_code == 400
     assert r.json()["error"]["code"] == ErrorCode.INVALID_URL
 
@@ -95,9 +95,9 @@ def test_oversized_url_rejected(client):
 # Private / removed / login-only content maps to a clear error
 # ---------------------------------------------------------------------------
 def test_private_or_removed_video(client):
-    """A well-formed but nonexistent YouTube id must map to a clear error,
+    """A well-formed but nonexistent Instagram id must map to a clear error,
     never a crash or a success."""
-    r = client.post("/api/info", json={"url": "https://www.youtube.com/watch?v=XXXXXXXXXXX"})
+    r = client.post("/api/info", json={"url": "https://www.instagram.com/reel/ZZZZZZZZZZZ/"})
     assert r.status_code >= 400
     body = r.json()
     assert "error" in body
@@ -109,6 +109,13 @@ def test_private_or_removed_video(client):
         ErrorCode.RATE_LIMITED,
     )
     assert body["error"]["message"]
+
+
+def test_youtube_unsupported_platform(client):
+    """YouTube links now map to UNSUPPORTED_PLATFORM (Instagram-only app)."""
+    r = client.post("/api/info", json={"url": "https://www.youtube.com/watch?v=jNQXAC9IVRw"})
+    assert r.status_code == 400
+    assert r.json()["error"]["code"] == ErrorCode.UNSUPPORTED_PLATFORM
 
 
 # ---------------------------------------------------------------------------

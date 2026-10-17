@@ -1,7 +1,8 @@
-/* IGDesk Downloader — frontend logic.
-   Vanilla JS, no framework. Handles: platform detection, fetch, tabs,
-   downloads (progress/success/error/retry), copy/share, opt-in local
-   history, EN + Hinglish i18n, theme toggle. Never sends history anywhere.
+/* IGDesk Downloader — Instagram-focused frontend logic.
+   Vanilla JS, no framework. Handles: instant platform badge, fetch, tabs
+   (sliding clay indicator), downloads (progress/success/error/retry),
+   copy/share, opt-in local history, EN + Hinglish i18n, theme toggle,
+   reveal-on-scroll, and a success confetti burst. Never sends history anywhere.
 */
 "use strict";
 
@@ -11,16 +12,22 @@ const API = "/api";
 /* ---------------- i18n (English + Hinglish) ---------------- */
 const I18N = {
   en: {
-    install: "Install app",
-    title: "Download public videos, audio &amp; thumbnails",
-    subtitle: "Paste a public link from Instagram or YouTube. Public content only — only download what you own or have permission to download.",
+    install: "Install",
+    badge: "✨ 100% Free · No Login",
+    title: 'Download Instagram <span class="grad">videos &amp; reels</span>',
+    subtitle: "Paste any public Instagram link to save video, MP3 audio and thumbnails in HD. Public content only — download what you own or have permission for.",
     urllabel: "Paste media link",
-    placeholder: "https://…",
+    placeholder: "https://www.instagram.com/reel/…",
     paste: "Paste", fetch: "Fetch", clear: "Clear",
     copylink: "Copy link", share: "Share",
-    tab_video: "Video", tab_audio: "Audio", tab_thumb: "Thumbnail",
-    platforms_title: "Platforms",
-    history_title: "Recent", history_clear: "Clear",
+    tab_video: "🎬 Video", tab_audio: "🎧 Audio", tab_thumb: "🖼️ Thumb",
+    step1: "Copy an Instagram link", step2: "Paste it above", step3: "Tap to download",
+    features_title: "Why IGDesk?",
+    feat1_t: "Lightning fast", feat1_d: "Direct, optimized downloads — no waiting around.",
+    feat2_t: "No login ever", feat2_d: "Works on public links only. We never ask for your account.",
+    feat3_t: "Video + MP3", feat3_d: "Grab HD video with audio, or convert straight to MP3.",
+    feat4_t: "Private by design", feat4_d: "Nothing you download is stored. Links stay on your device.",
+    history_title: "🕘 Recent", history_clear: "Clear",
     history_optin: "Save recent links on this device (never sent to a server)",
     nav_about: "About", nav_faq: "FAQ", nav_terms: "Terms", nav_privacy: "Privacy", nav_dmca: "DMCA",
     footer_note: "IGDesk Downloader · Public content only · Built with open-source yt-dlp",
@@ -31,24 +38,31 @@ const I18N = {
     copied: "Link copied!",
     share_unsupported: "Sharing isn't supported on this device — link copied instead.",
     download_started: "Download started…",
-    download_done: "Saved!",
+    download_done: "Saved! ✅",
     retry: "Retry",
     thumb_hint: "Best resolution, downloadable as JPG / PNG / WEBP",
     mp3_note: "converted", native_note: "native audio",
     best: "best resolution", lossless: "lossless", smallest: "smallest",
     err_default: "Something went wrong. Please try again.",
+    unsupported_platform: "Only Instagram links are supported right now.",
   },
   hi: {
     install: "App install karein",
-    title: "Public videos, audio &amp; thumbnails download karein",
-    subtitle: "Instagram ya YouTube ka public link paste karein. Sirf public content — jo aapke paas hai ya jiski permission hai wahi download karein.",
+    badge: "✨ 100% Free · Bina Login",
+    title: 'Instagram <span class="grad">videos &amp; reels</span> download karein',
+    subtitle: "Koi bhi public Instagram link paste karein aur HD me video, MP3 audio aur thumbnails save karein. Sirf public content — jo aapke paas hai ya jiski permission hai wahi download karein.",
     urllabel: "Media link paste karein",
-    placeholder: "https://…",
+    placeholder: "https://www.instagram.com/reel/…",
     paste: "Paste", fetch: "Fetch karein", clear: "Saaf karein",
     copylink: "Link copy", share: "Share",
-    tab_video: "Video", tab_audio: "Audio", tab_thumb: "Thumbnail",
-    platforms_title: "Platforms",
-    history_title: "Recent", history_clear: "Saaf karein",
+    tab_video: "🎬 Video", tab_audio: "🎧 Audio", tab_thumb: "🖼️ Thumb",
+    step1: "Instagram link copy karein", step2: "Upar paste karein", step3: "Download ke liye tap karein",
+    features_title: "IGDesk kyun?",
+    feat1_t: "Tez raftaar", feat1_d: "Seedha optimized download — koi intezaar nahi.",
+    feat2_t: "Kabhi login nahi", feat2_d: "Sirf public links par chalta hai. Hum kabhi account nahi maangte.",
+    feat3_t: "Video + MP3", feat3_d: "HD video audio ke saath, ya seedha MP3 me convert.",
+    feat4_t: "Private by design", feat4_d: "Jo download karte hain wo store nahi hota. Links sirf aapke device par.",
+    history_title: "🕘 Recent", history_clear: "Saaf karein",
     history_optin: "Recent links is device par save karein (kabhi server par nahi bheji jaati)",
     nav_about: "About", nav_faq: "FAQ", nav_terms: "Terms", nav_privacy: "Privacy", nav_dmca: "DMCA",
     footer_note: "IGDesk Downloader · Sirf public content · Open-source yt-dlp se bana",
@@ -59,12 +73,13 @@ const I18N = {
     copied: "Link copy ho gaya!",
     share_unsupported: "Is device par share supported nahi — link copy kar diya gaya.",
     download_started: "Download shuru…",
-    download_done: "Save ho gaya!",
+    download_done: "Save ho gaya! ✅",
     retry: "Dobara",
     thumb_hint: "Best resolution, JPG / PNG / WEBP me download",
     mp3_note: "converted", native_note: "native audio",
     best: "best resolution", lossless: "lossless", smallest: "smallest",
     err_default: "Kuch galat ho gaya. Dobara try karein.",
+    unsupported_platform: "Abhi sirf Instagram links supported hain.",
   },
 };
 let lang = localStorage.getItem("igdesk.lang") || "en";
@@ -100,7 +115,8 @@ function toast(msg, kind = "") {
   el.textContent = msg;
   el.className = "toast " + kind;
   clearTimeout(el._timer);
-  el._timer = setTimeout(() => el.classList.add("hidden"), 3500);
+  requestAnimationFrame(() => el.classList.add("show"));
+  el._timer = setTimeout(() => el.classList.remove("show"), 3500);
 }
 function setStatus(msg, kind = "") {
   const el = $("status");
@@ -120,31 +136,21 @@ function fmtDuration(s) {
   return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}` : `${m}:${String(sec).padStart(2, "0")}`;
 }
 
-/* Platform detection client-side (mirrors backend registry, for instant badge) */
-const PLATFORM_HINTS = [
-  { key: "youtube", name: "YouTube", icon: "▶️", re: /(youtube\.com|youtu\.be)/i },
-  { key: "instagram", name: "Instagram", icon: "📸", re: /instagram\.com|instagr\.am/i },
-  { key: "facebook", name: "Facebook", icon: "👍", re: /facebook\.com|fb\.watch/i },
-  { key: "x", name: "X", icon: "🐦", re: /(twitter\.com|x\.com)/i },
-  { key: "tiktok", name: "TikTok", icon: "🎵", re: /tiktok\.com/i },
-  { key: "pinterest", name: "Pinterest", icon: "📌", re: /pinterest\.com|pin\.it/i },
-  { key: "reddit", name: "Reddit", icon: "👽", re: /reddit\.com|redd\.it/i },
-  { key: "vimeo", name: "Vimeo", icon: "🎬", re: /vimeo\.com/i },
-  { key: "soundcloud", name: "SoundCloud", icon: "☁️", re: /soundcloud\.com/i },
-  { key: "dailymotion", name: "Dailymotion", icon: "🎥", re: /dailymotion\.com|dai\.ly/i },
-];
-function detectPlatform(url) {
-  return PLATFORM_HINTS.find((p) => p.re.test(url)) || null;
-}
+/* Reveal-on-scroll for .reveal sections */
+const io = new IntersectionObserver((entries) => {
+  entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
+}, { threshold: 0.12 });
+document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
 
+/* Client-side instant badge (Instagram-only). */
+const IG_RE = /instagram\.com|instagr\.am/i;
 const urlInput = $("urlInput");
 const platformBadge = $("platformBadge");
 urlInput.addEventListener("input", () => {
-  const p = detectPlatform(urlInput.value.trim());
-  if (p) {
+  if (IG_RE.test(urlInput.value.trim())) {
     platformBadge.classList.remove("hidden");
-    $("platformIcon").textContent = p.icon;
-    $("platformName").textContent = p.name;
+    $("platformIcon").textContent = "📸";
+    $("platformName").textContent = "Instagram";
   } else {
     platformBadge.classList.add("hidden");
   }
@@ -209,24 +215,21 @@ function renderResult(info) {
   $("rTitle").textContent = info.title;
   $("rUploader").textContent = info.uploader || "—";
   $("rDuration").textContent = fmtDuration(info.duration_seconds);
-  $("rPlatform").textContent = `${info.platform.icon} ${info.platform.name}`;
+  $("rPlatform").textContent = `📸 ${info.platform.name}`;
 
-  // Video tab
   const vlist = $("videoList");
   vlist.innerHTML = "";
   (info.video_options || []).forEach((o) => vlist.appendChild(videoRow(o)));
 
-  // Audio tab (native + MP3)
   const alist = $("audioList");
   alist.innerHTML = "";
   (info.audio_options || []).forEach((o) => alist.appendChild(audioRow(o)));
 
-  // Thumbnail tab
   const tp = $("thumbPreview");
   if (info.thumbnail_url) tp.src = info.thumbnail_url;
 
-  // Share button visibility
   $("shareBtn").classList.toggle("hidden", !navigator.share);
+  switchTab("video");
 }
 
 function videoRow(o) {
@@ -269,7 +272,16 @@ function audioRow(o) {
   return li;
 }
 
-/* ---------------- Tabs ---------------- */
+/* ---------------- Tabs (sliding clay indicator) ---------------- */
+const tabsEl = document.querySelector(".tabs");
+const indicator = document.querySelector(".tab-indicator");
+function moveIndicator(tab) {
+  if (!indicator || !tab) return;
+  const r = tab.getBoundingClientRect();
+  const pr = tabsEl.getBoundingClientRect();
+  indicator.style.width = r.width + "px";
+  indicator.style.transform = `translateX(${r.left - pr.left - 6}px)`;
+}
 document.querySelectorAll(".tab").forEach((tab) => {
   tab.addEventListener("click", () => switchTab(tab.dataset.tab));
 });
@@ -278,9 +290,15 @@ function switchTab(name) {
     const on = tb.dataset.tab === name;
     tb.classList.toggle("active", on);
     tb.setAttribute("aria-selected", on ? "true" : "false");
+    if (on) moveIndicator(tb);
   });
   ["video", "audio", "thumb"].forEach((p) => $(`panel-${p}`).classList.toggle("hidden", p !== name));
 }
+window.addEventListener("resize", () => {
+  const active = document.querySelector(".tab.active");
+  if (active) moveIndicator(active);
+});
+setTimeout(() => moveIndicator(document.querySelector(".tab.active")), 60);
 
 /* ---------------- Downloads (event delegation) ---------------- */
 document.addEventListener("click", async (e) => {
@@ -312,6 +330,7 @@ async function downloadMedia(kind, formatId, btn) {
     triggerSave(blob, fname);
     markDone(btn);
     toast(t("download_done"), "ok");
+    burstConfetti();
   } catch (err) {
     markFail(btn, () => downloadMedia(kind, formatId, btn));
     toast(err.message || t("err_default"), "err");
@@ -336,6 +355,7 @@ async function downloadThumb(ext, btn) {
     const fname = parseFilename(cd) || `thumbnail.${ext}`;
     triggerSave(blob, fname);
     toast(t("download_done"), "ok");
+    burstConfetti();
   } catch (err) {
     toast(err.message || t("err_default"), "err");
   } finally {
@@ -390,6 +410,27 @@ function markFail(btn, retryFn) {
   }
 }
 
+/* Success confetti burst (Instagram gradient colors) */
+function burstConfetti() {
+  const colors = ["#feda75", "#fa7e1e", "#d62976", "#962fbf", "#4f5bd5"];
+  const cx = window.innerWidth / 2, cy = window.innerHeight * 0.4;
+  for (let i = 0; i < 26; i++) {
+    const c = document.createElement("div");
+    c.className = "confetti";
+    c.style.left = cx + "px";
+    c.style.top = cy + "px";
+    c.style.background = colors[i % colors.length];
+    document.body.appendChild(c);
+    const ang = Math.random() * Math.PI * 2;
+    const dist = 90 + Math.random() * 140;
+    const dx = Math.cos(ang) * dist, dy = Math.sin(ang) * dist - 60;
+    c.animate([
+      { transform: "translate(0,0) rotate(0deg)", opacity: 1 },
+      { transform: `translate(${dx}px, ${dy + 220}px) rotate(${Math.random()*720-360}deg)`, opacity: 0 },
+    ], { duration: 1100 + Math.random() * 500, easing: "cubic-bezier(.2,.7,.4,1)" }).onfinish = () => c.remove();
+  }
+}
+
 /* ---------------- Copy / Share ---------------- */
 $("copyBtn").addEventListener("click", async () => {
   if (!currentInfo) return;
@@ -419,9 +460,6 @@ function addHistory(url, title) {
   renderHistory();
 }
 function renderHistory() {
-  // Keep the section (and its opt-in toggle) ALWAYS visible so the user can
-  // actually reach the switch to turn history on. Only the list + clear button
-  // appear once history is enabled.
   const sec = $("historySection");
   sec.classList.remove("hidden");
   const ul = $("historyList");

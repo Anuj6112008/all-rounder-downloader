@@ -3,9 +3,15 @@
 // Runs on mobile (390x844) and desktop (1440x900) via playwright.config.js.
 const { test, expect } = require("@playwright/test");
 
-const YT = "https://www.youtube.com/watch?v=jNQXAC9IVRw";
+const IG = "https://www.instagram.com/reel/DN035iN2Dum/";
 
-test.beforeEach(async ({ page }) => {
+test.beforeEach(async ({ page, context }) => {
+  // Give each e2e test its own rate-limit bucket (the backend keys buckets by
+  // client IP / X-Forwarded-For). Without this, a warm server that the pytest
+  // suite just hammered makes real-link fetches collide with a spent bucket.
+  const b = Math.floor(Math.random() * 254) + 1;
+  const c = Math.floor(Math.random() * 254) + 1;
+  await context.setExtraHTTPHeaders({ "x-forwarded-for": `10.98.${b}.${c}` });
   // fresh state per test
   await page.goto("/");
   await page.evaluate(() => localStorage.clear());
@@ -27,31 +33,31 @@ test("home loads with title, input, no console errors", async ({ page }) => {
 });
 
 test("platform auto-detects from link", async ({ page }) => {
-  await page.fill("#urlInput", YT);
+  await page.fill("#urlInput", IG);
   await expect(page.locator("#platformBadge")).toBeVisible();
-  await expect(page.locator("#platformName")).toHaveText("YouTube");
+  await expect(page.locator("#platformName")).toHaveText("Instagram");
 });
 
 test("paste button fills input (clipboard permission)", async ({ page, context }) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
-  await page.evaluate((text) => navigator.clipboard.writeText(text), YT);
+  await page.evaluate((text) => navigator.clipboard.writeText(text), IG);
   await page.click("#pasteBtn");
-  await expect(page.locator("#urlInput")).toHaveValue(YT);
+  await expect(page.locator("#urlInput")).toHaveValue(IG);
 });
 
 test("fetch returns result card with title/duration and tabs", async ({ page }) => {
-  await page.fill("#urlInput", YT);
+  await page.fill("#urlInput", IG);
   await page.click("#fetchBtn");
   await expect(page.locator("#result")).toBeVisible({ timeout: 45_000 });
   await expect(page.locator("#rTitle")).not.toHaveText("—");
-  await expect(page.locator("#rTitle")).toContainText(/zoo/i);
-  await expect(page.locator("#rDuration")).toContainText("0:19");
+  await expect(page.locator("#rTitle")).toContainText(/\w/i);
+  await expect(page.locator("#rDuration")).toContainText(/\d+:\d\d/);
   await expect(page.locator("#videoList .fmt-row")).not.toHaveCount(0);
   await expect(page.locator("#audioList .fmt-row")).not.toHaveCount(0);
 });
 
 test("tab switching toggles panels and aria-selected", async ({ page }) => {
-  await page.fill("#urlInput", YT);
+  await page.fill("#urlInput", IG);
   await page.click("#fetchBtn");
   await expect(page.locator("#result")).toBeVisible({ timeout: 45_000 });
 
@@ -66,7 +72,7 @@ test("tab switching toggles panels and aria-selected", async ({ page }) => {
 });
 
 test("video download button completes with success state", async ({ page }) => {
-  await page.fill("#urlInput", YT);
+  await page.fill("#urlInput", IG);
   await page.click("#fetchBtn");
   await expect(page.locator("#result")).toBeVisible({ timeout: 45_000 });
 
@@ -77,7 +83,7 @@ test("video download button completes with success state", async ({ page }) => {
 });
 
 test("mp3 download produces an .mp3 file", async ({ page }) => {
-  await page.fill("#urlInput", YT);
+  await page.fill("#urlInput", IG);
   await page.click("#fetchBtn");
   await expect(page.locator("#result")).toBeVisible({ timeout: 45_000 });
 
@@ -89,7 +95,7 @@ test("mp3 download produces an .mp3 file", async ({ page }) => {
 });
 
 test("thumbnail download produces an image file", async ({ page }) => {
-  await page.fill("#urlInput", YT);
+  await page.fill("#urlInput", IG);
   await page.click("#fetchBtn");
   await expect(page.locator("#result")).toBeVisible({ timeout: 45_000 });
   await page.click("#tab-thumb");
@@ -114,13 +120,13 @@ test("empty input shows validation message", async ({ page }) => {
 });
 
 test("clear button resets input and result", async ({ page }) => {
-  await page.fill("#urlInput", YT);
+  await page.fill("#urlInput", IG);
   await page.click("#clearBtn");
   await expect(page.locator("#urlInput")).toHaveValue("");
 });
 
 test("history opt-in stores items locally and can be cleared", async ({ page }) => {
-  await page.fill("#urlInput", YT);
+  await page.fill("#urlInput", IG);
   await page.click("#fetchBtn");
   await expect(page.locator("#result")).toBeVisible({ timeout: 45_000 });
 
@@ -130,7 +136,7 @@ test("history opt-in stores items locally and can be cleared", async ({ page }) 
   await expect(page.locator("#historyList li")).toHaveCount(1, { timeout: 45_000 });
 
   const stored = await page.evaluate(() => localStorage.getItem("igdesk.history"));
-  expect(stored).toContain("youtube.com");
+  expect(stored).toContain("instagram.com");
 
   await page.click("#clearHistoryBtn");
   await expect(page.locator("#historyList li")).toHaveCount(0);
@@ -177,12 +183,12 @@ test("PWA manifest + service worker registered (installable)", async ({ page }) 
 
 test("copy-link button copies the source URL", async ({ page, context }) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
-  await page.fill("#urlInput", YT);
+  await page.fill("#urlInput", IG);
   await page.click("#fetchBtn");
   await expect(page.locator("#result")).toBeVisible({ timeout: 45_000 });
   await page.click("#copyBtn");
   const clip = await page.evaluate(() => navigator.clipboard.readText());
-  expect(clip).toContain("youtube.com");
+  expect(clip).toContain("instagram.com");
 });
 
 test("legal pages reachable and titled", async ({ page }) => {

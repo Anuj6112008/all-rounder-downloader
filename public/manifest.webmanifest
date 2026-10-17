@@ -1,13 +1,13 @@
 {
   "name": "IGDesk Downloader",
   "short_name": "IGDesk",
-  "description": "Download public videos (1080p+ with audio), MP3, native audio and thumbnails from Instagram and YouTube.",
+  "description": "Download public Instagram videos & reels (1080p+ with audio), MP3, native audio and thumbnails.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#0b0f19",
-  "theme_color": "#0b0f19",
+  "background_color": "#1a1230",
+  "theme_color": "#1a1230",
   "lang": "en",
   "categories": ["utilities", "productivity"],
   "icons": [
@@ -17,7 +17,6 @@
     { "src": "/icons/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
   ],
   "shortcuts": [
-    { "name": "YouTube", "url": "/?platform=youtube", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
     { "name": "Instagram", "url": "/?platform=instagram", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
   ]
 }

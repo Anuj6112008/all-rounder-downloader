@@ -8,10 +8,10 @@ Implements the three-tier strategy from DECISIONS.md:
 * **B — Streaming proxy**: otherwise stream bytes from the CDN through the
   backend in chunks, forwarding ``Range`` headers for seeking, without ever
   writing the media to disk. Enforces max-size and time budgets.
-* **C — Merge / convert**: 1080p+ YouTube (and 720p+ Instagram Reels) ship as
+* **C — Merge / convert**: high-quality Instagram Reels ship as
   separate video-only + audio-only streams; ``ffmpeg`` merges them (stream
-  copy, no re-encode) into a fragmented MP4 streamed from a pipe. MP3
-  requests transcode audio-only through the same pipe.
+  copy, no re-encode) into a faststart MP4 so galleries read duration
+  correctly. MP3 requests transcode audio-only too.
 
 Every path validates the media host against the CDN allowlist before any
 outbound request (SSRF re-check on the resolved URL, not just the user URL).

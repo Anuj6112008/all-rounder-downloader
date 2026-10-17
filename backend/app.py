@@ -202,7 +202,7 @@ def _extract_raw(url: str, platform=None) -> dict:
 
     import yt_dlp as _y
     try:
-        with _y.YoutubeDL(_ydl_opts(platform)) as ydl:
+        with _y.YoutubeDL(_ydl_opts()) as ydl:
             return ydl.extract_info(url, download=False) or {}
     except Exception as exc:  # noqa: BLE001
         raise map_download_error(exc) from exc
@@ -397,8 +397,8 @@ def thumb(url: str, type: str = "jpg"):  # noqa: A002 - query param name fixed b
 def _fetch_best_thumbnail(media: MediaInfo) -> bytes:
     """Return bytes for the best *reachable* thumbnail.
 
-    Sources like YouTube frequently 404 their top-resolution variant
-    (e.g. maxresdefault.jpg) while lower variants exist.  Candidates are
+    Instagram frequently 404s one thumbnail variant while others exist.
+    Candidates are
     tried highest-resolution-first and the first one that returns 2xx image
     bytes wins; each candidate is re-checked against the SSRF host allowlist.
     """

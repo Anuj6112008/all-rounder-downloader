@@ -68,7 +68,7 @@ def normalize_url(raw: str) -> Tuple[str, str]:
     if len(url) > settings.max_url_length:
         raise AppError(ErrorCode.INVALID_URL, f"URL is too long (max {settings.max_url_length} characters).")
 
-    # Assume https when the user pastes a bare domain (e.g. "youtube.com/watch?...")
+    # Assume https when the user pastes a bare domain (e.g. "instagram.com/reel/...")
     # If a scheme is explicitly present, urlsplit() below will validate it.
     if "://" not in url:
         if _SCHEMELESS_RE.match(url):

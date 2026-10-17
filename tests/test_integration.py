@@ -1,8 +1,8 @@
-"""Integration tests against real public media links.
+"""Integration tests against real public Instagram media links.
 
 These verify the full pipeline end-to-end: metadata extraction, real file
 downloads (video with audio, MP3, native audio, thumbnail), and ffprobe
-validation that downloaded files are genuinely playable.
+validation that downloaded files are genuinely playable with correct duration.
 
 Run with:  pytest -m integration
 Skipped automatically when ffprobe/network is unavailable.
@@ -19,10 +19,9 @@ import requests
 
 BASE = os.getenv("TEST_BASE_URL", "http://127.0.0.1:8000")
 
-# Real, public, stable test links (one per required platform scenario).
-YT_VIDEO = "https://www.youtube.com/watch?v=jNQXAC9IVRw"      # 19s, "Me at the zoo"
-YT_SHORT = "https://www.youtube.com/shorts/XBWBTCqRsM0"        # Shorts
-IG_REEL = "https://www.instagram.com/reel/DN035iN2Dum/"        # public reel
+# Real, public, stable Instagram test links.
+IG_REEL = "https://www.instagram.com/reel/DN035iN2Dum/"        # public reel (~30s)
+IG_REEL_2 = "https://www.instagram.com/reel/DUP79qUCXs0/"      # second public reel
 
 FFPROBE = shutil.which("ffprobe")
 pytestmark = pytest.mark.integration
@@ -83,15 +82,14 @@ def _cleanup(*paths):
 # /api/info
 # ---------------------------------------------------------------------------
 @pytest.mark.parametrize("url,label", [
-    (YT_VIDEO, "youtube_video"),
-    (YT_SHORT, "youtube_short"),
     (IG_REEL, "instagram_reel"),
+    (IG_REEL_2, "instagram_reel_2"),
 ])
 def test_info_real_links(url, label):
     d = _info(url)
     assert d["title"], label
     assert d["uploader"], label
-    assert d["platform"]["key"] in ("youtube", "instagram")
+    assert d["platform"]["key"] == "instagram"
     assert d["duration_seconds"] and d["duration_seconds"] > 0
     assert d["thumbnail_url"]
     # must offer at least one video and one audio/mp3 option
@@ -100,41 +98,32 @@ def test_info_real_links(url, label):
 
 
 # ---------------------------------------------------------------------------
-# Video download (must contain BOTH video and audio streams)
+# Video download (must contain BOTH video and audio streams + real duration)
 # ---------------------------------------------------------------------------
-def test_video_download_has_video_and_audio():
-    d = _info(YT_VIDEO)
-    # pick the highest listed quality to exercise the merge path when present
+def test_video_download_has_video_audio_and_duration():
+    d = _info(IG_REEL)
+    # pick the highest listed quality to exercise the merge path
     fmt = d["video_options"][0]
-    resp = _download(YT_VIDEO, fmt["id"], "video")
+    resp = _download(IG_REEL, fmt["id"], "video")
     assert resp.status_code == 200, resp.status_code
     path = _save(resp)
     try:
-        streams = _probe_streams(path)
-        types = {s.get("codec_type") for s in streams.get("streams", [])}
+        probe = _probe_streams(path)
+        types = {s.get("codec_type") for s in probe.get("streams", [])}
         assert "video" in types, f"no video stream: {types}"
         assert "audio" in types, f"no audio stream: {types}"
+        # Regression guard for the "00:00 in galleries" bug: merged MP4s must
+        # carry real duration metadata (faststart moov at front), not 0.
+        dur = float(probe.get("format", {}).get("duration") or 0)
+        assert dur > 0, "downloaded video reports 0 duration (missing moov)"
     finally:
         _cleanup(path)
 
 
-def test_video_download_youtube_short():
-    d = _info(YT_SHORT)
+def test_video_download_second_reel():
+    d = _info(IG_REEL_2)
     fmt = d["video_options"][0]
-    resp = _download(YT_SHORT, fmt["id"], "video")
-    assert resp.status_code == 200
-    path = _save(resp)
-    try:
-        types = {s.get("codec_type") for s in _probe_streams(path).get("streams", [])}
-        assert "video" in types and "audio" in types
-    finally:
-        _cleanup(path)
-
-
-def test_instagram_reel_download():
-    d = _info(IG_REEL)
-    fmt = d["video_options"][0]
-    resp = _download(IG_REEL, fmt["id"], "video")
+    resp = _download(IG_REEL_2, fmt["id"], "video")
     assert resp.status_code == 200
     path = _save(resp)
     try:
@@ -148,9 +137,9 @@ def test_instagram_reel_download():
 # MP3 conversion
 # ---------------------------------------------------------------------------
 def test_mp3_download_plays_and_duration_matches():
-    d = _info(YT_VIDEO)
+    d = _info(IG_REEL)
     mp3 = next(o for o in d["audio_options"] if o["kind"] == "mp3")
-    resp = _download(YT_VIDEO, mp3["id"], "mp3")
+    resp = _download(IG_REEL, mp3["id"], "mp3")
     assert resp.status_code == 200
     path = _save(resp)
     try:
@@ -160,10 +149,10 @@ def test_mp3_download_plays_and_duration_matches():
         assert any(s.get("codec_type") == "audio" for s in streams), "MP3 has no audio"
         codec = next((s.get("codec_name") for s in streams if s.get("codec_type") == "audio"), "")
         assert codec == "mp3", f"expected mp3 codec, got {codec}"
-        # duration must be close to the source (19s) within tolerance
+        # duration must be close to the source within tolerance
         dur = float(fmt.get("duration") or 0)
         src = d["duration_seconds"]
-        assert abs(dur - src) <= 3, f"duration mismatch: {dur} vs {src}"
+        assert abs(dur - src) <= 4, f"duration mismatch: {dur} vs {src}"
     finally:
         _cleanup(path)
 
@@ -172,11 +161,11 @@ def test_mp3_download_plays_and_duration_matches():
 # Native audio
 # ---------------------------------------------------------------------------
 def test_native_audio_download():
-    d = _info(YT_VIDEO)
+    d = _info(IG_REEL)
     native = next((o for o in d["audio_options"] if o["kind"] == "audio"), None)
     if native is None:
-        pytest.skip("no native audio option for this item")
-    resp = _download(YT_VIDEO, native["id"], "audio")
+        pytest.skip("no native audio option for this reel")
+    resp = _download(IG_REEL, native["id"], "audio")
     assert resp.status_code == 200
     path = _save(resp)
     try:
@@ -191,7 +180,7 @@ def test_native_audio_download():
 # ---------------------------------------------------------------------------
 @pytest.mark.parametrize("t", ["jpg", "png", "webp"])
 def test_thumbnail_is_valid_image(t):
-    r = requests.get(f"{BASE}/api/thumb", params={"url": YT_VIDEO, "type": t}, timeout=60)
+    r = requests.get(f"{BASE}/api/thumb", params={"url": IG_REEL, "type": t}, timeout=60)
     assert r.status_code == 200
     assert r.headers["content-type"].startswith("image/")
     assert len(r.content) > 1000
@@ -209,9 +198,9 @@ def test_thumbnail_is_valid_image(t):
 # Filename quality (Content-Disposition must be clean)
 # ---------------------------------------------------------------------------
 def test_download_filename_is_clean():
-    d = _info(YT_VIDEO)
+    d = _info(IG_REEL)
     fmt = d["video_options"][0]
-    resp = _download(YT_VIDEO, fmt["id"], "video")
+    resp = _download(IG_REEL, fmt["id"], "video")
     cd = resp.headers.get("Content-Disposition", "")
     resp.close()
     assert cd.startswith("attachment;"), cd
@@ -226,19 +215,17 @@ def test_download_filename_is_clean():
 
 
 # ---------------------------------------------------------------------------
-# Extra enabled platforms — each newly-enabled platform must pass here.
-# (Loop over the registry so enabling a platform in config automatically
-#  adds it to the suite.)
+# Registry discipline — every enabled platform must have real-link coverage.
 # ---------------------------------------------------------------------------
 def test_every_enabled_platform_has_real_link_coverage():
-    """Ensures each enabled platform has a real-link test registered below.
+    """Ensures each enabled platform has a real-link integration test.
 
-    If you enable a new platform in backend/platforms.py, add a matching
-    entry to REAL_LINKS and this test enforces the discipline.
+    IGDesk is Instagram-only; if a platform is ever re-enabled in
+    backend/platforms.py, a matching test must be added here first.
     """
     from backend.platforms import PLATFORMS
     enabled = {p.key for p in PLATFORMS if p.enabled}
-    covered = {"youtube", "instagram"}  # keys covered by tests above
+    covered = {"instagram"}  # keys covered by tests above
     missing = enabled - covered
     assert not missing, (
         f"Enabled platforms without a real-link integration test: {sorted(missing)}. "

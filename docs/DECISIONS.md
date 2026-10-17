@@ -15,7 +15,8 @@ Deliver, for **public content only**, driven entirely by the open-source
 - Audio: native M4A/WEBM **and** MP3 (128/192/320)
 - Best-resolution thumbnail (JPG/PNG/WEBP)
 - Metadata: title, uploader, duration, platform
-- Platforms at launch: Instagram (public Reels/posts), YouTube (videos + Shorts)
+- Platform at launch: **Instagram (public Reels/posts)** — the app is
+  Instagram-dedicated (see decision 12 for why YouTube was removed).
 
 Hard constraints: no cookies/logins/proxies/captcha/DRM, no permanent storage
 of user files or links, secrets only via env vars, free hosting only.
@@ -198,6 +199,53 @@ wins; fallback stays documented in case Vercel constraints ever change.
   reports real duration > 0 and `moov` within the first 200 KB
   (faststart confirmed) — see final report for the live retest.
 
+### F6 — E2E suite failed 7/28 right after pytest (rate-limit contention)
+
+- **Symptom:** every Playwright test that made a **real Instagram fetch**
+  timed out (44–45 s, `#result` never became visible); all 21 non-fetch
+  tests passed. Backend suite (81 tests) had just passed against the
+  same server.
+- **Diagnosis (real evidence):** the in-memory limiter keys buckets by
+  `X-Forwarded-For` else client host (`app.py::_client_ip`). pytest +
+  e2e both hit `127.0.0.1`, so the integration suite spent the shared
+  `127.0.0.1:info` (30/min) and `:download` (10/min) buckets before e2e
+  started → 429 → frontend shows an error, card stays hidden → Playwright
+  assertion times out. **Confirmed:** restarting the server (clears
+  `_buckets`) made the previously-failing download test pass in
+  isolation (2/2).
+- **Alternatives:**
+  1. Give every e2e test a unique `X-Forwarded-For` via
+     `context.setExtraHTTPHeaders()` so each test owns its bucket.
+     ✅ **chosen** — deterministic, mirrors the isolation pattern
+     `test_negative.py`'s rate-limit test already uses; zero production
+     code changed.
+  2. Raise limits via env for test runs — ✗ rejected: weakens the real
+     limiter and hides genuine contention instead of removing it.
+  3. Sleep/pace the suite — ✗ rejected: slow and still flaky.
+- **Fix:** `tests/e2e/ui.spec.js::beforeEach` sets a random
+  `10.98.x.x` per test. **Retest:** failures dropped 7 → 2.
+
+### F7 — History opt-in test failed on both viewports (invisible checkbox)
+
+- **Symptom:** `history opt-in` test failed mobile **and** desktop even
+  after F6; `--reporter=list` showed `waiting for element to be visible…
+  element is not visible` on `#historyToggle.check()` (218 retries).
+- **Diagnosis (real evidence):** the claymorphism switch re-styled the
+  native checkbox to `position:absolute; opacity:0; width:0; height:0` —
+  a 0×0 box is invisible to pointer input and to Playwright's actionability
+  check. Regression introduced by the redesign (old UI had a visible
+  20 px native checkbox).
+- **Alternatives:**
+  1. Keep the input real-sized (50×28, `opacity:0`) overlaying the clay
+     track, `z-index:2` — ✅ **chosen**: restores clickability *and*
+     keyboard/SR access (it was an a11y regression too, not just tests).
+  2. `check({ force: true })` in the test — ✗ rejected: masks a real
+     a11y bug for everyone.
+  3. Drop the custom switch, restore the native checkbox — ✗ rejected:
+     loses the clay design for no reason once the overlay works.
+- **Fix:** `public/styles.css::switch input` overlay rule.
+  **Retest:** history test 2/2 pass (9.3 s / 9.6 s).
+
 ---
 
 ## 5. Security & compliance decisions
@@ -239,3 +287,47 @@ wins; fallback stays documented in case Vercel constraints ever change.
   responsible for downloading only content they own/are licensed to download.
 - **DMCA:** we host no media. A removal contact form/endpoint is provided at
   `/dmca.html`; complete requests block the reported link from the allowlist.
+
+---
+
+## 7. Pivot: all-in-one → Instagram-dedicated + claymorphism redesign
+
+Originally the app enabled both Instagram and YouTube. Live production testing
+(see **F4** above) proved YouTube **cannot** be reliably extracted from any free
+serverless host — Google's automated-traffic check blocks every datacenter IP,
+and every legitimate mitigation (official player clients) failed. The only
+workarounds (residential proxies, cookies, PO-token browser automation) are all
+explicitly forbidden by the project's hard rules. Rather than ship a
+half-broken multi-platform promise or fake results, the product was refocused.
+
+**Decision:** make IGDesk a **single-platform (Instagram) tool** and remove
+YouTube + every "coming soon" placeholder entirely.
+
+- `backend/platforms.py`: registry now holds **only** Instagram; the
+  `MEDIA_CDN_DOMAINS` SSRF allowlist was tightened to Instagram/Meta CDNs
+  (`cdninstagram.com`, `fbcdn.net`) — a smaller, safer surface.
+- `backend/config.py`: dropped the now-dead `youtube_player_clients` setting.
+- `backend/extractor.py`: `_ydl_opts()` no longer carries the YouTube
+  `extractor_args` branch.
+- Tests (`test_unit`, `test_negative`, `test_integration`, `e2e/ui.spec.js`)
+  were re-scoped to Instagram real-links; YouTube now asserts
+  `UNSUPPORTED_PLATFORM`.
+- Static pages (about/FAQ), manifest and PWA shortcuts de-mention YouTube.
+
+**Alternatives considered:**
+1. Keep YouTube enabled-but-broken behind a "coming soon"/error message.
+   ✗ rejected — a paid-looking product shouldn't advertise a dead platform.
+2. Keep the multi-platform registry but auto-disable YouTube on datacenter IPs.
+   ✗ rejected — adds complexity for zero user value; the registry is now
+   single-entry and trivially extensible if a platform ever becomes viable.
+3. Instagram-only, tightest allowlist, extensible registry shape. ✅ **chosen**
+   — honest, simplest to reason about, smallest SSRF surface, and the shape
+   (`Platform` dataclass + `_BY_DOMAIN`) still supports adding a platform by
+   appending one entry.
+
+**UI redesign (same change-set):** rebuilt the frontend on a **claymorphism**
+design language — Instagram-gradient accents, soft extruded double-shadows,
+floating animated background blobs, sliding tab indicator, bouncy
+micro-interactions, success confetti, reveal-on-scroll, and a light/dark clay
+theme. Kept all accessibility constraints (>=44px targets, contrast, ARIA,
+`prefers-reduced-motion`).
