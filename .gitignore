@@ -39,3 +39,6 @@ Thumbs.db
 *.webm
 *.mp3
 !public/**/*.png
+
+lh-report.json
+.vercel/
