@@ -18,7 +18,7 @@ jobs:
       # per-binary evidence in the logs.
       FFMPEG_PATH: /usr/bin/ffmpeg
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -59,7 +59,7 @@ jobs:
       # ffmpeg too. The env var reaches the Playwright-spawned server.
       FFMPEG_PATH: /usr/bin/ffmpeg
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Python
         uses: actions/setup-python@v5

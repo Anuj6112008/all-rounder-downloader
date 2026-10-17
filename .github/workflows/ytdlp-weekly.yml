@@ -21,7 +21,7 @@ jobs:
       # Use the platform-native apt build here (see DECISIONS.md F8).
       FFMPEG_PATH: /usr/bin/ffmpeg
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Python
         uses: actions/setup-python@v5
