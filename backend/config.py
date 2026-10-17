@@ -59,6 +59,11 @@ class Settings:
     # ---- Media pipeline -----------------------------------------------------
     allow_direct_redirect: bool = field(default_factory=lambda: _bool_env("ALLOW_DIRECT_REDIRECT", True))
 
+    # ---- YouTube extraction -------------------------------------------------
+    # Comma-separated yt-dlp player clients to try (e.g. "android,web,ios").
+    # Empty = yt-dlp default. Tuned to mitigate datacenter-IP bot checks.
+    youtube_player_clients: str = field(default_factory=lambda: os.getenv("YOUTUBE_PLAYER_CLIENTS", "android,web"))
+
     # ---- CORS ---------------------------------------------------------------
     allowed_origins: Tuple[str, ...] = field(
         default_factory=lambda: tuple(

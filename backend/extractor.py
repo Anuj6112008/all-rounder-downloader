@@ -87,9 +87,15 @@ class MediaInfo:
 
 _PRIVATE_RE = re.compile(
     r"private video|this video is private|sign in to confirm your age|"
-    r"confirm you.?re not a bot|login required|members.?only|"
+    r"login required|members.?only|"
     r"this content is only available|register to view|"
     r"join this channel|age.restricted", re.IGNORECASE)
+# Automated-traffic / bot-detection checks (e.g. "Sign in to confirm you're
+# not a bot").  This is an IP-reputation signal from the platform, NOT a
+# content-privacy setting, so it must not be reported as LOGIN_REQUIRED.
+_BOT_RE = re.compile(
+    r"confirm you.?re not a bot|not a bot|automated traffic|"
+    r"unusual traffic|confirm you.?re human|captcha", re.IGNORECASE)
 _GEO_RE = re.compile(
     r"available in your (?:country|region)|not available in your|"
     r"your country|geo.restricted|blocked in your country", re.IGNORECASE)
@@ -100,6 +106,19 @@ _RATE_RE = re.compile(r"too many requests|429|rate.limit", re.IGNORECASE)
 _TIMEOUT_RE = re.compile(r"timed? ?out|timeout|took too long", re.IGNORECASE)
 
 
+def _sanitize_error(text: str, limit: int = 200) -> str:
+    """Redact URLs/query strings from an error so it is safe to log.
+
+    Keeps only the human-readable signal (never a full media URL) for
+    diagnostics in platform logs.
+    """
+    import re as _re
+    text = _re.sub(r"https?://\S+", "<url>", text)
+    text = _re.sub(r"[?&][^=\s]+=[^&\s]+", "", text)
+    text = " ".join(text.split())
+    return text[:limit]
+
+
 def map_download_error(exc: Exception) -> AppError:
     """Translate a yt-dlp exception into a user-safe :class:`AppError`."""
     if isinstance(exc, AppError):
@@ -107,6 +126,15 @@ def map_download_error(exc: Exception) -> AppError:
     text = str(exc)
     if isinstance(exc, GeoRestrictedError) or _GEO_RE.search(text):
         return AppError(ErrorCode.GEO_BLOCKED, "This media is restricted in this region.")
+    # Bot / automated-traffic check BEFORE the private/login bucket so a
+    # datacenter-IP bot-check is not misreported as private/login-required.
+    if _BOT_RE.search(text):
+        log.warning("upstream bot-check: %s", _sanitize_error(text))
+        return AppError(
+            ErrorCode.UPSTREAM_BLOCKED,
+            "The platform is running an automated-traffic check on this server. "
+            "Please try again in a moment.",
+        )
     if _PRIVATE_RE.search(text):
         return AppError(ErrorCode.LOGIN_REQUIRED, "This media needs a login. Only public content is supported.")
     if _UNAVAILABLE_RE.search(text):
@@ -116,8 +144,9 @@ def map_download_error(exc: Exception) -> AppError:
     if _TIMEOUT_RE.search(text):
         return AppError(ErrorCode.TIMEOUT, "The request timed out. Try again.")
     if isinstance(exc, DownloadError):
+        log.warning("upstream blocked: %s", _sanitize_error(text))
         return AppError(ErrorCode.UPSTREAM_BLOCKED, "The platform blocked this request. Try again later.")
-    log.warning("unmapped extractor error: %s", type(exc).__name__)
+    log.warning("unmapped extractor error: %s — %s", type(exc).__name__, _sanitize_error(text))
     return AppError(ErrorCode.INTERNAL, "Something went wrong while reading this link.")
 
 
@@ -125,9 +154,14 @@ def map_download_error(exc: Exception) -> AppError:
 # Extraction
 # ---------------------------------------------------------------------------
 
-def _ydl_opts() -> Dict[str, Any]:
-    """Hardened yt-dlp options (no playlists, quiet, timeouts, /tmp cache)."""
-    return {
+def _ydl_opts(platform=None) -> Dict[str, Any]:
+    """Hardened yt-dlp options (no playlists, quiet, timeouts, /tmp cache).
+
+    For YouTube, selects official player clients (via ``extractor_args``) to
+    reduce datacenter-IP automated-traffic checks. No cookies, no proxies, no
+    spoofing — only first-class yt-dlp extractor options.
+    """
+    opts: Dict[str, Any] = {
         "quiet": True,
         "no_warnings": True,
         "noplaylist": True,
@@ -141,6 +175,10 @@ def _ydl_opts() -> Dict[str, Any]:
         "ignore_no_formats_error": False,
         "color": "never",
     }
+    clients = [c.strip() for c in settings.youtube_player_clients.split(",") if c.strip()]
+    if platform is not None and getattr(platform, "key", None) == "youtube" and clients:
+        opts["extractor_args"] = {"youtube": {"player_client": clients}}
+    return opts
 
 
 def extract_info(url: str, platform) -> MediaInfo:
@@ -151,7 +189,7 @@ def extract_info(url: str, platform) -> MediaInfo:
             exceeds the configured duration limit.
     """
     try:
-        with yt_dlp.YoutubeDL(_ydl_opts()) as ydl:
+        with yt_dlp.YoutubeDL(_ydl_opts(platform)) as ydl:
             raw = ydl.extract_info(url, download=False)
     except Exception as exc:  # noqa: BLE001 - mapped centrally
         raise map_download_error(exc) from exc

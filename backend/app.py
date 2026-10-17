@@ -196,13 +196,13 @@ def _raw_format_map(ydl_info: dict) -> dict:
     return {str(f.get("format_id")): f for f in (ydl_info.get("formats") or [])}
 
 
-def _extract_raw(url: str) -> dict:
+def _extract_raw(url: str, platform=None) -> dict:
     """Re-extract with yt-dlp to obtain fresh signed media URLs."""
     from .extractor import _ydl_opts  # reuse hardened options
 
     import yt_dlp as _y
     try:
-        with _y.YoutubeDL(_ydl_opts()) as ydl:
+        with _y.YoutubeDL(_ydl_opts(platform)) as ydl:
             return ydl.extract_info(url, download=False) or {}
     except Exception as exc:  # noqa: BLE001
         raise map_download_error(exc) from exc
@@ -224,7 +224,7 @@ def download(url: str, format_id: str, kind: str, request: Request):
         opt = _find_format(media, format_id)
 
         # Fresh signed URLs (the cached info may hold stale signatures).
-        raw = _extract_raw(norm_url)
+        raw = _extract_raw(norm_url, platform)
         raw_formats = _raw_format_map(raw)
 
         filename = build_filename(media.title, media.media_id, opt.ext,

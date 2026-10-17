@@ -143,6 +143,11 @@ class TestErrorMapping:
     def test_geo(self):
         assert self._map("The uploader has not made this video available in your country") == ErrorCode.GEO_BLOCKED
 
+    def test_bot_check_maps_to_upstream_not_login(self):
+        # A datacenter-IP bot check must NOT be reported as private/login.
+        assert self._map("Sign in to confirm you're not a bot") == ErrorCode.UPSTREAM_BLOCKED
+        assert self._map("Please confirm you're not a bot") == ErrorCode.UPSTREAM_BLOCKED
+
     def test_rate(self):
         assert self._map("HTTP Error 429: Too Many Requests") == ErrorCode.RATE_LIMITED
 
