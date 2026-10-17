@@ -34,7 +34,7 @@ test("platform auto-detects from link", async ({ page }) => {
 
 test("paste button fills input (clipboard permission)", async ({ page, context }) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
-  await page.evaluate(() => navigator.clipboard.writeText(YT));
+  await page.evaluate((text) => navigator.clipboard.writeText(text), YT);
   await page.click("#pasteBtn");
   await expect(page.locator("#urlInput")).toHaveValue(YT);
 });

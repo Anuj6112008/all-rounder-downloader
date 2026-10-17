@@ -419,11 +419,25 @@ function addHistory(url, title) {
   renderHistory();
 }
 function renderHistory() {
+  // Keep the section (and its opt-in toggle) ALWAYS visible so the user can
+  // actually reach the switch to turn history on. Only the list + clear button
+  // appear once history is enabled.
   const sec = $("historySection");
-  sec.classList.toggle("hidden", !historyEnabled());
-  if (!historyEnabled()) return;
+  sec.classList.remove("hidden");
   const ul = $("historyList");
+  const clearBtn = $("clearHistoryBtn");
   ul.innerHTML = "";
+  if (!historyEnabled()) {
+    clearBtn.classList.add("hidden");
+    const hint = document.createElement("li");
+    hint.className = "history-hint";
+    hint.textContent = lang === "hi"
+      ? "Neeche switch on karein taaki recent links is device par save hon."
+      : "Flip the switch below to save recent links on this device.";
+    ul.appendChild(hint);
+    return;
+  }
+  clearBtn.classList.remove("hidden");
   getHistory().forEach((h) => {
     const li = document.createElement("li");
     const a = document.createElement("a");
