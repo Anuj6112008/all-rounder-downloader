@@ -48,7 +48,7 @@ jobs:
 
       - name: Open PR to bump pin (only if tests passed)
         if: success()
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v8
         with:
           add-pinned: false
           branch: chore/bump-yt-dlp
