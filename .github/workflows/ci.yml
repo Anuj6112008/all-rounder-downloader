@@ -11,6 +11,12 @@ jobs:
     name: Backend (unit + integration)
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    env:
+      # The imageio-ffmpeg static build (what Vercel uses, verified working in
+      # production) SIGSEGVs — rc=-11 — on GitHub's Ubuntu runners. CI uses the
+      # platform-native apt build instead; scripts/ci_ffmpeg_diag.py prints the
+      # per-binary evidence in the logs.
+      FFMPEG_PATH: /usr/bin/ffmpeg
     steps:
       - uses: actions/checkout@v4
 
@@ -25,6 +31,9 @@ jobs:
 
       - name: Install dependencies
         run: pip install -r requirements.txt
+
+      - name: Diagnose ffmpeg binaries (evidence for rc=-11 CI crashes)
+        run: python scripts/ci_ffmpeg_diag.py
 
       - name: Unit tests (offline)
         run: pytest tests/ -m "not integration" -v
@@ -44,6 +53,11 @@ jobs:
     name: Frontend e2e (Playwright)
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      # Same rc=-11 (SIGSEGV) imageio-ffmpeg crash as the backend job — the
+      # e2e download tests exercise merge/MP3, so this job needs a working
+      # ffmpeg too. The env var reaches the Playwright-spawned server.
+      FFMPEG_PATH: /usr/bin/ffmpeg
     steps:
       - uses: actions/checkout@v4
 
@@ -57,6 +71,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+
+      - name: Install ffmpeg (merge/MP3 paths hit by e2e downloads)
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
 
       - name: Install backend deps
         run: pip install -r requirements.txt
