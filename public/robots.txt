@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /api/download
+Disallow: /api/thumb
+
+Sitemap: https://all-rounder-downloader.vercel.app/sitemap.xml

@@ -1,0 +1,41 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual env
+.venv/
+venv/
+env/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+server.log
+server.err.log
+
+# Node (Playwright / tooling)
+node_modules/
+test-results/
+playwright-report/
+.playwright/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Vercel
+.vercel/
+
+# Downloaded temp media
+*.mp4
+*.m4a
+*.webm
+*.mp3
+!public/**/*.png

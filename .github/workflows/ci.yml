@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend-tests:
+    name: Backend (unit + integration)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install ffmpeg (ffprobe for integration assertions)
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Unit tests (offline)
+        run: pytest tests/ -m "not integration" -v
+
+      - name: Start local server
+        run: |
+          python -m uvicorn backend.app:app --host 127.0.0.1 --port 8000 &
+          sleep 8
+          curl -fsS http://127.0.0.1:8000/api/health
+
+      - name: Integration tests (real public links)
+        env:
+          TEST_BASE_URL: http://127.0.0.1:8000
+        run: pytest tests/ -m integration -v
+
+  frontend-e2e:
+    name: Frontend e2e (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install backend deps
+        run: pip install -r requirements.txt
+
+      - name: Install Playwright browsers
+        run: npm ci || npm install && npx playwright install --with-deps chromium
+
+      - name: Run e2e tests
+        run: npx playwright test
+
+      - name: Upload report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

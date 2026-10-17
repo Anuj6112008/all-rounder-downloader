@@ -1,0 +1,14 @@
+# IGDesk Downloader — backend dependencies (pinned)
+# Core engine: open-source yt-dlp, no paid APIs, no API keys.
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+yt-dlp==2026.8.19
+requests==2.32.3
+Pillow==11.1.0
+# Static ffmpeg binary for the merge/MP3 pipeline on Vercel Functions.
+imageio-ffmpeg==0.6.0
+
+# --- test/dev only (not required in production) ---
+httpx==0.28.1
+pytest==8.3.4
+pytest-asyncio==0.25.0
