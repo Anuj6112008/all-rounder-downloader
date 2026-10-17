@@ -1,6 +1,6 @@
 # IGDesk Downloader — backend dependencies (pinned)
 # Core engine: open-source yt-dlp, no paid APIs, no API keys.
-fastapi==0.115.6
+fastapi==0.143.1
 uvicorn[standard]==0.34.0
 yt-dlp==2026.8.19
 requests==2.32.3
