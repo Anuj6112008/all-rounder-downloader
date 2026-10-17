@@ -7,45 +7,41 @@
     { "src": "public/**", "use": "@vercel/static" }
   ],
   "routes": [
+    {
+      "src": "/(.*)",
+      "headers": {
+        "X-Content-Type-Options": "nosniff",
+        "Referrer-Policy": "no-referrer",
+        "X-Frame-Options": "DENY",
+        "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+        "X-Powered-By": "IGDesk Downloader"
+      }
+    },
+    {
+      "src": "/sw.js",
+      "headers": {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Service-Worker-Allowed": "/"
+      }
+    },
+    {
+      "src": "/manifest.webmanifest",
+      "headers": {
+        "Content-Type": "application/manifest+json"
+      }
+    },
     { "src": "/api/(.*)", "dest": "/api/index.py" },
+    { "src": "/about", "status": 308, "headers": { "Location": "/about.html" } },
+    { "src": "/about/", "status": 308, "headers": { "Location": "/about.html" } },
+    { "src": "/faq", "status": 308, "headers": { "Location": "/faq.html" } },
+    { "src": "/faq/", "status": 308, "headers": { "Location": "/faq.html" } },
+    { "src": "/terms", "status": 308, "headers": { "Location": "/terms.html" } },
+    { "src": "/terms/", "status": 308, "headers": { "Location": "/terms.html" } },
+    { "src": "/privacy", "status": 308, "headers": { "Location": "/privacy.html" } },
+    { "src": "/privacy/", "status": 308, "headers": { "Location": "/privacy.html" } },
+    { "src": "/dmca", "status": 308, "headers": { "Location": "/dmca.html" } },
+    { "src": "/dmca/", "status": 308, "headers": { "Location": "/dmca.html" } },
     { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "/public/$1" }
-  ],
-  "redirects": [
-    { "source": "/about", "destination": "/about.html", "permanent": true },
-    { "source": "/about/", "destination": "/about.html", "permanent": true },
-    { "source": "/faq", "destination": "/faq.html", "permanent": true },
-    { "source": "/faq/", "destination": "/faq.html", "permanent": true },
-    { "source": "/terms", "destination": "/terms.html", "permanent": true },
-    { "source": "/terms/", "destination": "/terms.html", "permanent": true },
-    { "source": "/privacy", "destination": "/privacy.html", "permanent": true },
-    { "source": "/privacy/", "destination": "/privacy.html", "permanent": true },
-    { "source": "/dmca", "destination": "/dmca.html", "permanent": true },
-    { "source": "/dmca/", "destination": "/dmca.html", "permanent": true }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "Referrer-Policy", "value": "no-referrer" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
-        { "key": "X-Powered-By", "value": "IGDesk Downloader" }
-      ]
-    },
-    {
-      "source": "/sw.js",
-      "headers": [
-        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
-        { "key": "Service-Worker-Allowed", "value": "/" }
-      ]
-    },
-    {
-      "source": "/manifest.webmanifest",
-      "headers": [
-        { "key": "Content-Type", "value": "application/manifest+json" }
-      ]
-    }
   ]
 }
