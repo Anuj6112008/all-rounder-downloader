@@ -9,28 +9,42 @@
 const $ = (id) => document.getElementById(id);
 const API = "/api";
 
+/* ---------------- Inline SVG icon set (emoji-free UI) ---------------- */
+const ICONS = {
+  sparkle: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>',
+  instagram: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" stroke="none"/></svg>',
+  clock: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.2V12l3.4 2"/></svg>',
+  download: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v10.5M7.3 10.2L12 14.9l4.7-4.7M5 20h14"/></svg>',
+  check: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12.5l5 5 10-11"/></svg>',
+  moon: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>',
+  sun: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6L6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4"/></svg>',
+  heart: '<svg class="ic made-heart" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.6l-1.3-1.2C5.5 14.7 2.5 12 2.5 8.7 2.5 6 4.6 4 7.2 4c1.6 0 3.1.7 4 1.9L12 7.3l.8-1.4C13.7 4.7 15.2 4 16.8 4 19.4 4 21.5 6 21.5 8.7c0 3.3-3 6-8.2 10.7z" fill="currentColor" stroke="none"/></svg>',
+  telegramCredit: '<a class="made-with" href="https://telegram.me/PyAnuj" target="_blank" rel="noopener noreferrer">__HEART__Made With Love By <strong>@PyAnuj</strong></a>',
+};
+ICONS.telegramCredit = ICONS.telegramCredit.replace("__HEART__", ICONS.heart);
+
 /* ---------------- i18n (English + Hinglish) ---------------- */
 const I18N = {
   en: {
     install: "Install",
-    badge: "✨ 100% Free · No Login",
+    badge: "100% Free · No Login",
     title: 'Download Instagram <span class="grad">videos &amp; reels</span>',
     subtitle: "Paste any public Instagram link to save video, MP3 audio and thumbnails in HD. Public content only — download what you own or have permission for.",
     urllabel: "Paste media link",
     placeholder: "https://www.instagram.com/reel/…",
     paste: "Paste", fetch: "Fetch", clear: "Clear",
     copylink: "Copy link", share: "Share",
-    tab_video: "🎬 Video", tab_audio: "🎧 Audio", tab_thumb: "🖼️ Thumb",
+    tab_video: "Video", tab_audio: "Audio", tab_thumb: "Thumb",
     step1: "Copy an Instagram link", step2: "Paste it above", step3: "Tap to download",
     features_title: "Why IGDesk?",
     feat1_t: "Lightning fast", feat1_d: "Direct, optimized downloads — no waiting around.",
     feat2_t: "No login ever", feat2_d: "Works on public links only. We never ask for your account.",
     feat3_t: "Video + MP3", feat3_d: "Grab HD video with audio, or convert straight to MP3.",
     feat4_t: "Private by design", feat4_d: "Nothing you download is stored. Links stay on your device.",
-    history_title: "🕘 Recent", history_clear: "Clear",
+    history_title: "Recent", history_clear: "Clear",
     history_optin: "Save recent links on this device (never sent to a server)",
     nav_about: "About", nav_faq: "FAQ", nav_terms: "Terms", nav_privacy: "Privacy", nav_dmca: "DMCA",
-    footer_note: "IGDesk Downloader · Public content only · Built with open-source yt-dlp",
+    footer_note: `IGDesk Downloader · Public content only · ${ICONS.telegramCredit}`,
     fetching: "Fetching media info…",
     paste_first: "Please paste a link first.",
     invalid_url: "That doesn't look like a valid http(s) link.",
@@ -38,7 +52,7 @@ const I18N = {
     copied: "Link copied!",
     share_unsupported: "Sharing isn't supported on this device — link copied instead.",
     download_started: "Download started…",
-    download_done: "Saved! ✅",
+    download_done: "Saved!",
     retry: "Retry",
     thumb_hint: "Best resolution, downloadable as JPG / PNG / WEBP",
     mp3_note: "converted", native_note: "native audio",
@@ -48,24 +62,24 @@ const I18N = {
   },
   hi: {
     install: "App install karein",
-    badge: "✨ 100% Free · Bina Login",
+    badge: "100% Free · Bina Login",
     title: 'Instagram <span class="grad">videos &amp; reels</span> download karein',
     subtitle: "Koi bhi public Instagram link paste karein aur HD me video, MP3 audio aur thumbnails save karein. Sirf public content — jo aapke paas hai ya jiski permission hai wahi download karein.",
     urllabel: "Media link paste karein",
     placeholder: "https://www.instagram.com/reel/…",
     paste: "Paste", fetch: "Fetch karein", clear: "Saaf karein",
     copylink: "Link copy", share: "Share",
-    tab_video: "🎬 Video", tab_audio: "🎧 Audio", tab_thumb: "🖼️ Thumb",
+    tab_video: "Video", tab_audio: "Audio", tab_thumb: "Thumb",
     step1: "Instagram link copy karein", step2: "Upar paste karein", step3: "Download ke liye tap karein",
     features_title: "IGDesk kyun?",
     feat1_t: "Tez raftaar", feat1_d: "Seedha optimized download — koi intezaar nahi.",
     feat2_t: "Kabhi login nahi", feat2_d: "Sirf public links par chalta hai. Hum kabhi account nahi maangte.",
     feat3_t: "Video + MP3", feat3_d: "HD video audio ke saath, ya seedha MP3 me convert.",
     feat4_t: "Private by design", feat4_d: "Jo download karte hain wo store nahi hota. Links sirf aapke device par.",
-    history_title: "🕘 Recent", history_clear: "Saaf karein",
+    history_title: "Recent", history_clear: "Saaf karein",
     history_optin: "Recent links is device par save karein (kabhi server par nahi bheji jaati)",
     nav_about: "About", nav_faq: "FAQ", nav_terms: "Terms", nav_privacy: "Privacy", nav_dmca: "DMCA",
-    footer_note: "IGDesk Downloader · Sirf public content · Open-source yt-dlp se bana",
+    footer_note: `IGDesk Downloader · Sirf public content · ${ICONS.telegramCredit}`,
     fetching: "Media info le rahe hain…",
     paste_first: "Pehle ek link paste karein.",
     invalid_url: "Yeh sahi http(s) link nahi lagta.",
@@ -73,7 +87,7 @@ const I18N = {
     copied: "Link copy ho gaya!",
     share_unsupported: "Is device par share supported nahi — link copy kar diya gaya.",
     download_started: "Download shuru…",
-    download_done: "Save ho gaya! ✅",
+    download_done: "Save ho gaya!",
     retry: "Dobara",
     thumb_hint: "Best resolution, JPG / PNG / WEBP me download",
     mp3_note: "converted", native_note: "native audio",
@@ -89,7 +103,7 @@ const t = (k) => (I18N[lang] && I18N[lang][k]) || I18N.en[k] || k;
 const themeBtn = $("themeBtn");
 function applyTheme(theme) {
   document.documentElement.setAttribute("data-theme", theme);
-  themeBtn.textContent = theme === "dark" ? "🌙" : "☀️";
+  themeBtn.innerHTML = theme === "dark" ? ICONS.moon : ICONS.sun;
   localStorage.setItem("igdesk.theme", theme);
 }
 applyTheme(localStorage.getItem("igdesk.theme") || "dark");
@@ -149,7 +163,6 @@ const platformBadge = $("platformBadge");
 urlInput.addEventListener("input", () => {
   if (IG_RE.test(urlInput.value.trim())) {
     platformBadge.classList.remove("hidden");
-    $("platformIcon").textContent = "📸";
     $("platformName").textContent = "Instagram";
   } else {
     platformBadge.classList.add("hidden");
@@ -215,7 +228,7 @@ function renderResult(info) {
   $("rTitle").textContent = info.title;
   $("rUploader").textContent = info.uploader || "—";
   $("rDuration").textContent = fmtDuration(info.duration_seconds);
-  $("rPlatform").textContent = `📸 ${info.platform.name}`;
+  $("rPlatform").innerHTML = `${ICONS.instagram} ${info.platform.name}`;
 
   const vlist = $("videoList");
   vlist.innerHTML = "";
@@ -246,7 +259,7 @@ function videoRow(o) {
     </span>
     <span class="fmt-side">
       <span class="fmt-size">${fmtBytes(o.filesize_bytes)}</span>
-      <span class="dl-ic">⬇️</span>
+      <span class="dl-ic">${ICONS.download}</span>
     </span>`;
   li.appendChild(btn);
   return li;
@@ -266,7 +279,7 @@ function audioRow(o) {
     </span>
     <span class="fmt-side">
       <span class="fmt-size">${fmtBytes(o.filesize_bytes)}</span>
-      <span class="dl-ic">⬇️</span>
+      <span class="dl-ic">${ICONS.download}</span>
     </span>`;
   li.appendChild(btn);
   return li;
@@ -505,7 +518,7 @@ async function loadPlatforms() {
     (data.platforms || []).forEach((p) => {
       const li = document.createElement("li");
       li.className = p.enabled ? "ok" : "soon";
-      li.innerHTML = `<span aria-hidden="true">${p.icon}</span> ${p.name} <span class="p-status">${p.enabled ? "✓" : t("coming_soon") || "soon"}</span>`;
+      li.innerHTML = `<span aria-hidden="true">${ICONS[p.key] || ICONS.instagram}</span> ${p.name} <span class="p-status">${p.enabled ? ICONS.check : t("coming_soon") || "soon"}</span>`;
       ul.appendChild(li);
     });
   } catch { /* non-fatal */ }

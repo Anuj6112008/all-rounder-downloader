@@ -36,27 +36,44 @@
 
   <header class="topbar">
     <div class="brand">
-      <span class="brand-logo" aria-hidden="true">📸</span>
+      <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true">
+        <defs>
+          <linearGradient id="igd" x1="0" y1="1" x2="1" y2="0">
+            <stop offset="0" stop-color="#feda75"/><stop offset=".3" stop-color="#fa7e1e"/>
+            <stop offset=".6" stop-color="#d62976"/><stop offset=".85" stop-color="#962fbf"/>
+            <stop offset="1" stop-color="#4f5bd5"/>
+          </linearGradient>
+        </defs>
+        <rect width="64" height="64" rx="17" fill="url(#igd)"/>
+        <path fill="#fff" d="M23.5 11h17a3.5 3.5 0 0 1 3.5 3.5V20H20v-5.5A3.5 3.5 0 0 1 23.5 11z"/>
+        <rect x="8.5" y="18" width="47" height="29" rx="7" fill="#fff"/>
+        <circle cx="32" cy="33" r="9.5" fill="none" stroke="url(#igd)" stroke-width="4"/>
+        <path d="M32 28.4v8.6m-4.1-4.1L32 37l4.1-4.1" fill="none" stroke="url(#igd)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="46.5" cy="24.5" r="2.4" fill="url(#igd)"/>
+      </svg>
       <span>IG<strong>Desk</strong></span>
     </div>
     <div class="topbar-actions">
       <button id="installBtn" class="btn btn-ghost hidden" type="button" data-i18n="install">Install</button>
       <button id="langBtn" class="btn btn-ghost" type="button" aria-label="Switch language">EN&nbsp;|&nbsp;हिं</button>
-      <button id="themeBtn" class="btn btn-ghost" type="button" aria-label="Toggle theme">🌙</button>
+      <button id="themeBtn" class="btn btn-ghost" type="button" aria-label="Toggle theme"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
     </div>
   </header>
 
   <main id="main" class="wrap">
     <!-- Hero -->
     <section class="hero reveal">
-      <span class="hero-badge" data-i18n="badge">✨ 100% Free · No Login</span>
+      <span class="hero-badge">
+        <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>
+        <span data-i18n="badge">100% Free · No Login</span>
+      </span>
       <h1 data-i18n="title">Download Instagram <span class="grad">videos &amp; reels</span></h1>
       <p class="sub" data-i18n="subtitle">Paste any public Instagram link to save video, MP3 audio and thumbnails in HD. Public content only — download what you own or have permission for.</p>
       <div class="pills" aria-label="Features">
-        <span class="pill">🎬 1080p HD</span>
-        <span class="pill">🎧 MP3 + M4A</span>
-        <span class="pill">🖼️ Thumbnails</span>
-        <span class="pill">🚫 No watermark</span>
+        <span class="pill"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="4.5" width="19" height="15" rx="2.5"/><path d="M7.5 4.5v15M16.5 4.5v15M2.5 12h19"/></svg> 1080p HD</span>
+        <span class="pill"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15v-3a9 9 0 0 1 18 0v3"/><path d="M5.5 15.5h1.8a1 1 0 0 1 1 1V19a1 1 0 0 1-1 1H5.5a1 1 0 0 1-1-1v-2.5a1 1 0 0 1 1-1zM16.7 15.5h1.8a1 1 0 0 1 1 1V19a1 1 0 0 1-1 1h-1.8a1 1 0 0 1-1-1v-2.5a1 1 0 0 1 1-1z"/></svg> MP3 + M4A</span>
+        <span class="pill"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M21 15.5l-4.8-4.8L6.5 20.4"/></svg> Thumbnails</span>
+        <span class="pill"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg> No watermark</span>
       </div>
     </section>
 
@@ -64,13 +81,13 @@
     <section class="input-card reveal" aria-label="Link input">
       <div class="input-row">
         <div class="platform-badge hidden" id="platformBadge" aria-live="polite">
-          <span id="platformIcon" aria-hidden="true">📸</span>
+          <svg class="ic" id="platformIcon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" stroke="none"/></svg>
           <span id="platformName">Instagram</span>
         </div>
         <label class="visually-hidden" for="urlInput" data-i18n="urllabel">Paste media link</label>
         <input id="urlInput" type="url" inputmode="url" autocomplete="off" spellcheck="false"
                placeholder="https://www.instagram.com/reel/…" data-i18n-placeholder="placeholder" />
-        <button id="pasteBtn" class="btn btn-ghost btn-icon" type="button" data-i18n="paste" aria-label="Paste">📋</button>
+        <button id="pasteBtn" class="btn btn-ghost btn-icon" type="button" data-i18n="paste" aria-label="Paste"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1.2"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg></button>
       </div>
       <div class="btn-row">
         <button id="fetchBtn" class="btn btn-primary btn-lg" type="button" data-i18n="fetch">
@@ -117,9 +134,9 @@
 
       <div class="tabs" role="tablist" aria-label="Download type">
         <span class="tab-indicator" aria-hidden="true"></span>
-        <button class="tab active" id="tab-video" role="tab" aria-selected="true" aria-controls="panel-video" data-tab="video" data-i18n="tab_video">🎬 Video</button>
-        <button class="tab" id="tab-audio" role="tab" aria-selected="false" aria-controls="panel-audio" data-tab="audio" data-i18n="tab_audio">🎧 Audio</button>
-        <button class="tab" id="tab-thumb" role="tab" aria-selected="false" aria-controls="panel-thumb" data-tab="thumb" data-i18n="tab_thumb">🖼️ Thumb</button>
+        <button class="tab active" id="tab-video" role="tab" aria-selected="true" aria-controls="panel-video" data-tab="video"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="4.5" width="19" height="15" rx="2.5"/><path d="M7.5 4.5v15M16.5 4.5v15M2.5 12h19"/></svg><span data-i18n="tab_video">Video</span></button>
+        <button class="tab" id="tab-audio" role="tab" aria-selected="false" aria-controls="panel-audio" data-tab="audio"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15v-3a9 9 0 0 1 18 0v3"/><path d="M5.5 15.5h1.8a1 1 0 0 1 1 1V19a1 1 0 0 1-1 1H5.5a1 1 0 0 1-1-1v-2.5a1 1 0 0 1 1-1zM16.7 15.5h1.8a1 1 0 0 1 1 1V19a1 1 0 0 1-1 1h-1.8a1 1 0 0 1-1-1v-2.5a1 1 0 0 1 1-1z"/></svg><span data-i18n="tab_audio">Audio</span></button>
+        <button class="tab" id="tab-thumb" role="tab" aria-selected="false" aria-controls="panel-thumb" data-tab="thumb"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M21 15.5l-4.8-4.8L6.5 20.4"/></svg><span data-i18n="tab_thumb">Thumb</span></button>
       </div>
 
       <div id="panel-video" class="panel" role="tabpanel" aria-labelledby="tab-video">
@@ -146,10 +163,10 @@
     <section class="features reveal" aria-label="Why IGDesk">
       <h2 data-i18n="features_title">Why IGDesk?</h2>
       <div class="feat-grid">
-        <div class="feat clay"><span class="feat-ic">⚡</span><h3 data-i18n="feat1_t">Lightning fast</h3><p data-i18n="feat1_d">Direct, optimized downloads — no waiting around.</p></div>
-        <div class="feat clay"><span class="feat-ic">🔓</span><h3 data-i18n="feat2_t">No login ever</h3><p data-i18n="feat2_d">Works on public links only. We never ask for your account.</p></div>
-        <div class="feat clay"><span class="feat-ic">🎧</span><h3 data-i18n="feat3_t">Video + MP3</h3><p data-i18n="feat3_d">Grab HD video with audio, or convert straight to MP3.</p></div>
-        <div class="feat clay"><span class="feat-ic">🔒</span><h3 data-i18n="feat4_t">Private by design</h3><p data-i18n="feat4_d">Nothing you download is stored. Links stay on your device.</p></div>
+        <div class="feat clay"><span class="feat-ic"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L4.5 13.5H11L9.5 22 19 10h-6.5z" fill="currentColor" stroke="none"/></svg></span><h3 data-i18n="feat1_t">Lightning fast</h3><p data-i18n="feat1_d">Direct, optimized downloads — no waiting around.</p></div>
+        <div class="feat clay"><span class="feat-ic"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V7.5a4 4 0 0 1 7.9-1"/></svg></span><h3 data-i18n="feat2_t">No login ever</h3><p data-i18n="feat2_d">Works on public links only. We never ask for your account.</p></div>
+        <div class="feat clay"><span class="feat-ic"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15v-3a9 9 0 0 1 18 0v3"/><path d="M5.5 15.5h1.8a1 1 0 0 1 1 1V19a1 1 0 0 1-1 1H5.5a1 1 0 0 1-1-1v-2.5a1 1 0 0 1 1-1zM16.7 15.5h1.8a1 1 0 0 1 1 1V19a1 1 0 0 1-1 1h-1.8a1 1 0 0 1-1-1v-2.5a1 1 0 0 1 1-1z"/></svg></span><h3 data-i18n="feat3_t">Video + MP3</h3><p data-i18n="feat3_d">Grab HD video with audio, or convert straight to MP3.</p></div>
+        <div class="feat clay"><span class="feat-ic"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="11" width="15" height="9.5" rx="2.5"/><path d="M8 11V7.5a4 4 0 0 1 8 0V11"/><circle cx="12" cy="15.8" r="1.2" fill="currentColor" stroke="none"/></svg></span><h3 data-i18n="feat4_t">Private by design</h3><p data-i18n="feat4_d">Nothing you download is stored. Links stay on your device.</p></div>
       </div>
     </section>
 
@@ -161,7 +178,7 @@
     <!-- History -->
     <section id="historySection" class="history clay reveal" aria-label="Recent downloads">
       <div class="history-head">
-        <h2 data-i18n="history_title">🕘 Recent</h2>
+        <h2><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.2V12l3.4 2"/></svg><span data-i18n="history_title">Recent</span></h2>
         <button id="clearHistoryBtn" class="btn btn-ghost btn-sm hidden" type="button" data-i18n="history_clear">Clear</button>
       </div>
       <label class="switch">
@@ -181,7 +198,7 @@
       <a href="/privacy.html" data-i18n="nav_privacy">Privacy</a>
       <a href="/dmca.html" data-i18n="nav_dmca">DMCA</a>
     </nav>
-    <p data-i18n="footer_note">IGDesk Downloader · Public content only · Built with open-source yt-dlp</p>
+    <p data-i18n="footer_note">IGDesk Downloader · Public content only · <a class="made-with" href="https://telegram.me/PyAnuj" target="_blank" rel="noopener noreferrer"><svg class="ic made-heart" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.6l-1.3-1.2C5.5 14.7 2.5 12 2.5 8.7 2.5 6 4.6 4 7.2 4c1.6 0 3.1.7 4 1.9L12 7.3l.8-1.4C13.7 4.7 15.2 4 16.8 4 19.4 4 21.5 6 21.5 8.7c0 3.3-3 6-8.2 10.7z" fill="currentColor" stroke="none"/></svg>Made With Love By <strong>@PyAnuj</strong></a></p>
   </footer>
 
   <div id="toast" class="toast hidden" role="alert"></div>
