@@ -15,6 +15,11 @@ jobs:
   check-latest-yt-dlp:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      # Same rc=-11 SIGSEGV as CI had: find_ffmpeg() prefers the imageio
+      # static build, which crashes on real inputs on GitHub's runners.
+      # Use the platform-native apt build here (see DECISIONS.md F8).
+      FFMPEG_PATH: /usr/bin/ffmpeg
     steps:
       - uses: actions/checkout@v4
 
