@@ -3,7 +3,7 @@
 fastapi==0.115.6
 uvicorn[standard]==0.34.0
 yt-dlp==2026.8.19
-requests==2.32.3
+requests==2.34.2
 Pillow==11.1.0
 # Static ffmpeg binary for the merge/MP3 pipeline on Vercel Functions.
 imageio-ffmpeg==0.6.0
