@@ -246,6 +246,34 @@ wins; fallback stays documented in case Vercel constraints ever change.
 - **Fix:** `public/styles.css::switch input` overlay rule.
   **Retest:** history test 2/2 pass (9.3 s / 9.6 s).
 
+### F8 — CI red: ffmpeg SIGSEGV (`rc=-11`) on GitHub runners
+
+- **Symptom:** after the Instagram pivot commit, unit + non-fetch e2e passed
+  but every ffmpeg-backed assertion failed in CI: merge → `502`, MP3 →
+  0-byte body, e2e downloads → 90 s timeout; server log showed
+  `backend.ffmpeg: merge failed (rc=-11)` (four times). `ffprobe`-based
+  assertions (thumbnails, native-audio probe) **passed**.
+- **Diagnosis (real evidence):** `rc=-11` = SIGSEGV. `find_ffmpeg()`
+  resolves `FFMPEG_PATH` → `imageio-ffmpeg` wheel → PATH, so CI was using
+  the imageio static Linux build (0.6.0 = ffmpeg 7.1) while `ffprobe`
+  came from apt — hence probe OK / ffmpeg crash. The same imageio build
+  works on Windows locally and on Vercel (AL2023, live 19/19 checks
+  including merge + MP3); only GitHub's Ubuntu runners crashed. New
+  `scripts/ci_ffmpeg_diag.py` runs a network-free synthetic encode per
+  binary so this evidence stays visible in CI logs.
+- **Alternatives:**
+  1. CI-only `FFMPEG_PATH=/usr/bin/ffmpeg` (platform-native apt build)
+     + apt ffmpeg in the e2e job; Vercel/local untouched. ✅ **chosen**
+     — prod's imageio binary is already proven live, and CI gets a binary
+     that runs on its OS.
+  2. Bump/change the `imageio-ffmpeg` pin — ✗ rejected: no evidence any
+     version fixes the runner crash, and it risks the *working* prod pin.
+  3. Skip ffmpeg-dependent tests in CI — ✗ rejected: deletes the exact
+     coverage that caught this failure class.
+- **Fix:** job-level `env.FFMPEG_PATH` in both CI jobs, apt ffmpeg in the
+  e2e job, diagnostic step pushed as `f80a936`. **Retest:** CI re-run —
+  see final report for the run URL.
+
 ---
 
 ## 5. Security & compliance decisions
