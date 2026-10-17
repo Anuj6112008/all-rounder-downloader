@@ -145,12 +145,12 @@ test("history opt-in stores items locally and can be cleared", async ({ page }) 
 });
 
 test("language toggle switches to Hinglish and persists", async ({ page }) => {
-  await expect(page.locator("#fetchBtn")).toHaveText("Fetch");
+  await expect(page.locator("#fetchBtn")).toHaveText("Download");
   await page.click("#langBtn");
-  await expect(page.locator("#fetchBtn")).toHaveText("Fetch karein");
+  await expect(page.locator("#fetchBtn")).toHaveText("Download karein");
   expect(await page.evaluate(() => localStorage.getItem("igdesk.lang"))).toBe("hi");
   await page.reload();
-  await expect(page.locator("#fetchBtn")).toHaveText("Fetch karein");
+  await expect(page.locator("#fetchBtn")).toHaveText("Download karein");
 });
 
 test("theme toggle switches to light and persists", async ({ page }) => {

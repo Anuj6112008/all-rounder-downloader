@@ -219,9 +219,9 @@ html[data-theme="light"] .blob { opacity: .4; mix-blend-mode: multiply; }
 /* ---------- How it works ---------- */
 .how {
   display: flex; align-items: center; justify-content: center; gap: 6px;
-  margin: 30px 0 8px; flex-wrap: wrap;
+  margin: 30px 0 8px; flex-wrap: nowrap;
 }
-.step { text-align: center; flex: 0 0 auto; max-width: 120px; }
+.step { text-align: center; flex: 1 1 0; min-width: 0; max-width: 120px; }
 .step-num {
   display: inline-grid; place-items: center; width: 46px; height: 46px;
   font-weight: 800; font-size: 1.1rem; border-radius: 50%;
@@ -229,10 +229,10 @@ html[data-theme="light"] .blob { opacity: .4; mix-blend-mode: multiply; }
   margin-bottom: 8px;
 }
 .step p { margin: 0; font-size: .82rem; color: var(--muted); font-weight: 600; }
-.step-line { flex: 1 1 24px; height: 3px; min-width: 20px; max-width: 60px; border-radius: 3px; background: var(--clay-lo); box-shadow: var(--shadow-in); }
+.step-line { flex: 1 1 24px; height: 3px; min-width: 10px; max-width: 60px; border-radius: 3px; background: var(--clay-lo); box-shadow: var(--shadow-in); }
 
 /* ---------- Result ---------- */
-.result { margin-top: 26px; }
+.result { margin-top: 26px; scroll-margin-top: 76px; }
 .result-card {
   display: flex; gap: 14px; align-items: flex-start;
   background: var(--clay); border-radius: var(--radius);
@@ -410,6 +410,12 @@ html[data-theme="light"] .blob { opacity: .4; mix-blend-mode: multiply; }
 .page h2 { font-size: 1.1rem; margin-top: 1.6em; }
 .page a { color: var(--brand); }
 .page ul { padding-left: 1.2em; }
+
+@media (max-width: 480px) {
+  .how { gap: 4px; }
+  .step-num { width: 40px; height: 40px; font-size: 1rem; margin-bottom: 6px; }
+  .step p { font-size: .74rem; }
+}
 
 @media (min-width: 640px) {
   .hero h1 { font-size: 2.3rem; }

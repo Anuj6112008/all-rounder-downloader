@@ -32,7 +32,7 @@ const I18N = {
     subtitle: "Paste any public Instagram link to save video, MP3 audio and thumbnails in HD. Public content only — download what you own or have permission for.",
     urllabel: "Paste media link",
     placeholder: "https://www.instagram.com/reel/…",
-    paste: "Paste", fetch: "Fetch", clear: "Clear",
+    paste: "Paste", fetch: "Download", clear: "Clear",
     copylink: "Copy link", share: "Share",
     tab_video: "Video", tab_audio: "Audio", tab_thumb: "Thumb",
     step1: "Copy an Instagram link", step2: "Paste it above", step3: "Tap to download",
@@ -67,7 +67,7 @@ const I18N = {
     subtitle: "Koi bhi public Instagram link paste karein aur HD me video, MP3 audio aur thumbnails save karein. Sirf public content — jo aapke paas hai ya jiski permission hai wahi download karein.",
     urllabel: "Media link paste karein",
     placeholder: "https://www.instagram.com/reel/…",
-    paste: "Paste", fetch: "Fetch karein", clear: "Saaf karein",
+    paste: "Paste", fetch: "Download karein", clear: "Saaf karein",
     copylink: "Link copy", share: "Share",
     tab_video: "Video", tab_audio: "Audio", tab_thumb: "Thumb",
     step1: "Instagram link copy karein", step2: "Upar paste karein", step3: "Download ke liye tap karein",
@@ -191,6 +191,15 @@ let currentInfo = null;
 $("fetchBtn").addEventListener("click", doFetch);
 urlInput.addEventListener("keydown", (e) => { if (e.key === "Enter") doFetch(); });
 
+/* Smooth-scroll to the result section once media info is ready, so the
+   user always sees where the download options appeared. */
+function scrollToResult() {
+  const el = $("result");
+  if (!el || el.classList.contains("hidden")) return;
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  el.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+}
+
 async function doFetch() {
   const url = urlInput.value.trim();
   if (!url) { setStatus(t("empty_url"), "error"); return; }
@@ -213,6 +222,7 @@ async function doFetch() {
     renderResult(currentInfo);
     setStatus("", "");
     addHistory(url, data.title);
+    scrollToResult();
   } catch (err) {
     setStatus(err.message || t("err_default"), "error");
     $("result").classList.add("hidden");
