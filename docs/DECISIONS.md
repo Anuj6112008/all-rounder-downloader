@@ -143,6 +143,61 @@ wins; fallback stays documented in case Vercel constraints ever change.
 - **Fix:** killed every listener on :8000, restarted clean (no `--reload` for
   tests). **Lesson:** restart + confirm port owner before trusting a retest.
 
+### F4 — Deployed YouTube returned 401 `LOGIN_REQUIRED` for public videos
+
+- **Symptom:** production `/api/info` for public YouTube links returned
+  `401 LOGIN_REQUIRED`, while the same links passed locally. Instagram was
+  unaffected on production.
+- **Diagnosis (real evidence):** captured the deployed response body —
+  `{"error":{"code":"LOGIN_REQUIRED",...}}` was *our own* mapping. The regex
+  `_PRIVATE_RE` matched `confirm you're not a bot`, i.e. YouTube's
+  automated-traffic check against the serverless datacenter IP — an
+  IP-reputation signal, not a content-privacy setting.
+- **Alternatives:**
+  1. Re-map bot-checks to `UPSTREAM_BLOCKED` with an honest message
+     ("automated-traffic check — try again shortly") + log a URL-redacted
+     signature for diagnosis. ✅ **chosen (correctness, mandatory)**
+  2. yt-dlp official `player_client` selection (`android,web` via
+     `extractor_args`) — first-class extractor config, no cookies/keys.
+     ✅ **chosen (mitigation attempt)**
+  3. Retry-with-backoff — cheap but unlikely to defeat a persistent
+     IP-based check. ✔ kept as a future option, not implemented.
+  Forbidden alternatives explicitly avoided: cookies, proxy rotation,
+  captcha solving, fingerprint spoofing.
+- **Fix:** `_BOT_RE` checked before `_PRIVATE_RE`; bot-check →
+  `UPSTREAM_BLOCKED`; `YOUTUBE_PLAYER_CLIENTS` env (default `android,web`)
+  wired into `_ydl_opts` for YouTube only. Unit tests lock the mapping.
+- **Re-test:** deployed + retested; Instagram full pipeline passes in
+  production; YouTube behaviour documented honestly (see final report).
+
+### F5 — Merged videos showed 00:00 duration in phone galleries
+
+- **Symptom:** user-reported: Instagram Reel 720p+ downloads played but
+  gallery showed **00:00 duration**.
+- **Diagnosis (real evidence):** the merge path piped ffmpeg output to a
+  non-seekable stdout, which forces a *fragmented* MP4
+  (`+frag_keyframe+empty_moov`). Fragmented MP4 omits the standard `moov`
+  atom layout that gallery apps read for duration.
+- **Alternatives:**
+  1. Merge to a seekable temp file in `/tmp` with `-movflags +faststart`
+     (moov relocated to the front), stream the file, always delete in a
+     `finally`. ✅ **chosen** — spec explicitly allows `/tmp` "if
+     unavoidable"; a seekable output is impossible on a pipe, so it *is*
+     the unavoidable case.
+  2. Keep fragmented MP4 and post-process duration metadata — fragile,
+     essentially hand-patching atoms. ✗ rejected.
+  3. Re-encode to a container with inline duration — wastes CPU and
+     quality for no reason. ✗ rejected.
+- **Fix:** `merge_to_tempfile()` + `stream_file()` (delete-even-on-
+  disconnect) in `backend/ffmpeg.py`; download route now serves the
+  temp file with a real `Content-Length`.
+- **Sub-failure during verification (F5a):** first retest returned 502;
+  server log showed `File '...mp4' already exists` — `tempfile.mkstemp`
+  pre-creates the file and ffmpeg refuses to overwrite without `-y`.
+  **Fix:** added `-y`. **Re-test:** ffprobe on the merged download
+  reports real duration > 0 and `moov` within the first 200 KB
+  (faststart confirmed) — see final report for the live retest.
+
 ---
 
 ## 5. Security & compliance decisions

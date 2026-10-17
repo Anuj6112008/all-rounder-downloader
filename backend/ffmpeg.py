@@ -103,6 +103,80 @@ def stream_merged(video_url: str, audio_url: str, video_ext: str, audio_ext: str
     return _popen_stream(cmd)
 
 
+def merge_to_tempfile(video_url: str, audio_url: str, headers: Optional[dict] = None) -> str:
+    """Merge video-only + audio-only into a proper MP4 in /tmp; return its path.
+
+    A piped (non-seekable) MP4 can only be *fragmented*, which omits the
+    ``moov`` atom — phone galleries then show 00:00 duration.  Writing to a
+    seekable temp file lets ffmpeg emit a standard MP4 and relocate ``moov`` to
+    the front (``+faststart``), so duration metadata is present and the file
+    plays/saves correctly in gallery apps.  Uses stream copy (no re-encode).
+
+    The caller is responsible for deleting the returned file (always cleaned up
+    in a ``finally``).  /tmp is the only writable dir on serverless and this is
+    the "only if unavoidable" case from the spec.
+    """
+    import subprocess
+    import tempfile
+
+    exe = find_ffmpeg()
+    if not exe:
+        raise AppError(ErrorCode.INTERNAL, "Media processing is unavailable on this server.")
+
+    fd, path = tempfile.mkstemp(suffix=".mp4", dir=settings.tmp_dir)
+    os.close(fd)
+
+    hdr_arg = "".join(f"{k}: {v}\r\n" for k, v in (headers or {}).items())
+    ua = (headers or {}).get("User-Agent", "Mozilla/5.0")
+    cmd: List[str] = [exe, "-hide_banner", "-loglevel", "error", "-nostdin", "-y",
+                      "-user_agent", ua]
+    if hdr_arg:
+        cmd += ["-headers", hdr_arg]
+    cmd += ["-i", video_url, "-user_agent", ua]
+    if hdr_arg:
+        cmd += ["-headers", hdr_arg]
+    cmd += ["-i", audio_url, "-c", "copy", "-movflags", "+faststart", path]
+
+    try:
+        proc = subprocess.run(cmd, stdout=subprocess.DEVNULL,
+                              stderr=subprocess.PIPE, timeout=settings.job_budget_seconds)
+    except subprocess.TimeoutExpired:
+        _silent_remove(path)
+        raise AppError(ErrorCode.TIMEOUT, "Merging video and audio took too long.") from None
+    except OSError:
+        _silent_remove(path)
+        raise AppError(ErrorCode.INTERNAL, "Could not start the media processor.") from None
+
+    if proc.returncode != 0 or not os.path.exists(path) or os.path.getsize(path) == 0:
+        tail = (proc.stderr or b"").decode(errors="replace")[:300]
+        log.error("merge failed (rc=%s): %s", proc.returncode, tail)
+        _silent_remove(path)
+        raise AppError(ErrorCode.UPSTREAM_BLOCKED, "Could not merge video and audio.")
+    return path
+
+
+def _silent_remove(path: str) -> None:
+    """Delete *path*, ignoring errors (cleanup must never raise)."""
+    try:
+        if os.path.exists(path):
+            os.remove(path)
+    except OSError:
+        pass
+
+
+def stream_file(path: str) -> Iterator[bytes]:
+    """Yield a temp file's bytes in chunks, then delete it (even on disconnect)."""
+    try:
+        with open(path, "rb") as fh:
+            while True:
+                chunk = fh.read(settings.chunk_size)
+                if not chunk:
+                    break
+                yield chunk
+    finally:
+        _silent_remove(path)
+
+
 def stream_mp3(audio_url: str, kbps: int, headers: Optional[dict] = None) -> Iterator[bytes]:
     """Transcode *audio_url* to MP3 at *kbps*, yielding output chunks."""
     exe = find_ffmpeg()

@@ -292,18 +292,28 @@ def download(url: str, format_id: str, kind: str, request: Request):
         v_size = raw_fmt.get("filesize") or raw_fmt.get("filesize_approx")
         if a_size and v_size:
             pipeline.check_size(a_size + v_size, kind)
-        merged_ext = "mp4" if opt.ext in ("mp4", "m4v") else opt.ext
-        stream = pipeline.merge_stream(
-            raw_fmt["url"], audio["url"],
-            video_ext=merged_ext, audio_ext=audio.get("ext") or "m4a",
-            headers=raw_fmt.get("http_headers"),
-        )
-        fname = build_filename(media.title, media.media_id, merged_ext)
+
+        from .ffmpeg import merge_to_tempfile, stream_file
+        merged_path = merge_to_tempfile(
+            raw_fmt["url"], audio["url"], headers=raw_fmt.get("http_headers"))
+        try:
+            merged_size = os.path.getsize(merged_path)
+        except OSError:
+            merged_size = None
+        pipeline.check_size(merged_size, kind)
+
+        fname = build_filename(media.title, media.media_id, "mp4")
+        headers = {
+            "Content-Disposition": content_disposition(fname),
+            "X-Content-Type-Options": "nosniff",
+            "Accept-Ranges": "bytes",
+        }
+        if merged_size:
+            headers["Content-Length"] = str(merged_size)
         return StreamingResponse(
-            _guarded(stream),
-            media_type="video/mp4" if merged_ext == "mp4" else "application/octet-stream",
-            headers={"Content-Disposition": content_disposition(fname),
-                     "X-Content-Type-Options": "nosniff"},
+            stream_file(merged_path),
+            media_type="video/mp4",
+            headers=headers,
         )
 
     except AppError as exc:
