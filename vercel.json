@@ -11,6 +11,18 @@
     { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "/public/$1" }
   ],
+  "redirects": [
+    { "source": "/about", "destination": "/about.html", "permanent": true },
+    { "source": "/about/", "destination": "/about.html", "permanent": true },
+    { "source": "/faq", "destination": "/faq.html", "permanent": true },
+    { "source": "/faq/", "destination": "/faq.html", "permanent": true },
+    { "source": "/terms", "destination": "/terms.html", "permanent": true },
+    { "source": "/terms/", "destination": "/terms.html", "permanent": true },
+    { "source": "/privacy", "destination": "/privacy.html", "permanent": true },
+    { "source": "/privacy/", "destination": "/privacy.html", "permanent": true },
+    { "source": "/dmca", "destination": "/dmca.html", "permanent": true },
+    { "source": "/dmca/", "destination": "/dmca.html", "permanent": true }
+  ],
   "headers": [
     {
       "source": "/(.*)",

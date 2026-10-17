@@ -255,12 +255,15 @@ wins; fallback stays documented in case Vercel constraints ever change.
   assertions (thumbnails, native-audio probe) **passed**.
 - **Diagnosis (real evidence):** `rc=-11` = SIGSEGV. `find_ffmpeg()`
   resolves `FFMPEG_PATH` → `imageio-ffmpeg` wheel → PATH, so CI was using
-  the imageio static Linux build (0.6.0 = ffmpeg 7.1) while `ffprobe`
-  came from apt — hence probe OK / ffmpeg crash. The same imageio build
-  works on Windows locally and on Vercel (AL2023, live 19/19 checks
-  including merge + MP3); only GitHub's Ubuntu runners crashed. New
-  `scripts/ci_ffmpeg_diag.py` runs a network-free synthetic encode per
-  binary so this evidence stays visible in CI logs.
+  the imageio static Linux build (0.6.0 = johnvansickle ffmpeg 7.0.2
+  static) while `ffprobe` came from apt — hence probe OK / ffmpeg crash.
+  The new `scripts/ci_ffmpeg_diag.py` showed the nuance: on the runner the
+  imageio build passes a **network-free synthetic encode** (`rc=0 OK`) but
+  SIGSEGVs on **real Instagram HTTPS inputs** (4× `rc=-11` in the failing
+  run); apt ffmpeg 6.1.1 handles both. The same imageio build works on
+  Windows locally and on Vercel (AL2023, live 19/19 including merge+MP3) —
+  so the crash is specific to that static build's real-input path on
+  GitHub's runners.
 - **Alternatives:**
   1. CI-only `FFMPEG_PATH=/usr/bin/ffmpeg` (platform-native apt build)
      + apt ffmpeg in the e2e job; Vercel/local untouched. ✅ **chosen**
