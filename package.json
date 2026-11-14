@@ -9,6 +9,6 @@
     "test:e2e:desktop": "playwright test --project=desktop"
   },
   "devDependencies": {
-    "@playwright/test": "^1.49.1"
+    "@playwright/test": "^1.65.0"
   }
 }
